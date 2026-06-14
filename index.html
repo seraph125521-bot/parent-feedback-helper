@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>初高中数学课后反馈助手 · 一键生成家长反馈</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">数</span>
+        <div>
+          <h1>课后反馈助手</h1>
+          <p class="tagline">填几句课堂观察，自动生成发给家长的初高中数学课反馈</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- 输入区 -->
+      <section class="card" id="inputPanel">
+        <div class="field">
+          <label>今天的数学主题 <span class="hint">（教了什么）</span></label>
+          <input type="text" id="topic" placeholder="例如：一次函数图像 / 三角恒等变换 / 立体几何线面关系 / 导数应用" />
+        </div>
+
+        <div class="field">
+          <label>班级整体表现 <span class="hint">（选填，所有反馈会带上这个氛围）</span></label>
+          <input type="text" id="classNote" placeholder="例如：基础题完成度不错，综合题里条件分析和书写规范还需加强" />
+        </div>
+
+        <div class="field">
+          <div class="row-between">
+            <label>学员名单</label>
+            <span class="hint" id="studentCount">0 名</span>
+          </div>
+          <div id="studentList" class="student-list"></div>
+          <button type="button" class="btn-add" id="addStudent">＋ 添加学员</button>
+        </div>
+
+        <div class="field">
+          <label>反馈语气</label>
+          <div class="seg" id="tone">
+            <button type="button" class="seg-btn active" data-tone="温暖鼓励">温暖鼓励</button>
+            <button type="button" class="seg-btn" data-tone="专业简洁">专业简洁</button>
+            <button type="button" class="seg-btn" data-tone="活泼亲切">活泼亲切</button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" id="generate">一键生成全班反馈</button>
+        <p class="mock-note" id="mockNote">当前为初高中数学演示模式（本地模板生成）。接入大模型后内容会更自然、更个性化。</p>
+      </section>
+
+      <!-- 结果区 -->
+      <section id="resultPanel" class="result-panel hidden">
+        <div class="result-head">
+          <h2>生成结果 <span id="resultCount" class="badge"></span></h2>
+          <button type="button" class="btn-ghost" id="copyAll">复制全部</button>
+        </div>
+        <div id="results"></div>
+        <button type="button" class="btn-ghost btn-back" id="backToEdit">← 返回修改</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>初高中数学课后反馈助手 · MVP 演示版</span>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="generator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
