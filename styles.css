@@ -142,12 +142,24 @@ textarea:focus { border-color: var(--brand); background: #fff; }
 .intro-copy { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
 .intro-copy strong { color: var(--brand-press); font-weight: 700; }
 
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+}
 .builder-label {
-  display: block;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
-  margin-bottom: 10px;
+  cursor: pointer;
+}
+.fold-icon {
+  font-size: 12px;
+  color: var(--ink-soft);
 }
 .section-builder { display: flex; flex-direction: column; gap: 10px; }
 

@@ -94,8 +94,13 @@
             <input type="text" id="tplTitle" placeholder="例如：课后反馈 / 今日课堂小结" />
           </div>
 
-          <label class="builder-label">包含哪些栏目（拖动不需要，点上下箭头排序）</label>
-          <div id="sectionBuilder" class="section-builder"></div>
+          <div class="builder-header" id="builderToggle" title="点击展开/折叠">
+            <label class="builder-label">包含哪些栏目 <span class="hint" style="font-weight:normal">（点上下箭头排序）</span></label>
+            <span class="fold-icon" id="foldIcon">▲</span>
+          </div>
+          <div id="sectionBuilderWrap">
+            <div id="sectionBuilder" class="section-builder"></div>
+          </div>
 
           <button type="button" class="btn-ghost btn-reset-tpl" id="resetTemplate">↺ 恢复推荐格式</button>
         </div>

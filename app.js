@@ -362,6 +362,14 @@
     $("#backToEdit").addEventListener("click", () => showView("write"));
     $("#regenerate").addEventListener("click", () => showView("write"));
 
+    // 栏目折叠
+    $("#builderToggle").addEventListener("click", () => {
+      const wrap = $("#sectionBuilderWrap");
+      const icon = $("#foldIcon");
+      const isHidden = wrap.classList.toggle("hidden");
+      icon.textContent = isHidden ? "▼" : "▲";
+    });
+
     // 底部导航
     document.querySelectorAll(".tab").forEach((tab) => {
       tab.addEventListener("click", () => showView(tab.dataset.view));
