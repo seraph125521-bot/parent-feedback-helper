@@ -6,14 +6,19 @@
   const state = {
     category: "数学",
     tone: "温暖鼓励",
+    lessonTime: "",
+    lessonNo: "",
     topic: "",
+    homework: "",
     classNote: "",
+    feedbackTemplate: "",
     students: [],
   };
 
   const $ = (sel) => document.querySelector(sel);
   const studentList = $("#studentList");
   const studentCount = $("#studentCount");
+  const templateApi = window.PFH_TEMPLATE;
 
   /* ---------- 学员行 ---------- */
   function makeStudentRow(name = "", keywords = "") {
@@ -66,8 +71,12 @@
   /* ---------- 生成 ---------- */
   async function generate() {
     syncStudents();
+    state.lessonTime = $("#lessonTime").value.trim();
+    state.lessonNo = $("#lessonNo").value.trim();
     state.topic = $("#topic").value.trim();
+    state.homework = $("#homework").value.trim();
     state.classNote = $("#classNote").value.trim();
+    state.feedbackTemplate = $("#feedbackTemplate").value.trim();
 
     const valid = state.students.filter((s) => s.name);
     if (valid.length === 0) {
@@ -85,8 +94,12 @@
     for (const student of valid) {
       const text = await window.generateFeedback({
         category: state.category,
+        lessonTime: state.lessonTime,
+        lessonNo: state.lessonNo,
         topic: state.topic,
+        homework: state.homework,
         classNote: state.classNote,
+        feedbackTemplate: state.feedbackTemplate,
         tone: state.tone,
         student,
       });
@@ -176,8 +189,12 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         tone: state.tone,
+        lessonTime: $("#lessonTime").value,
+        lessonNo: $("#lessonNo").value,
         topic: $("#topic").value,
+        homework: $("#homework").value,
         classNote: $("#classNote").value,
+        feedbackTemplate: $("#feedbackTemplate").value,
         students: state.students,
       }));
     } catch (e) {}
@@ -191,8 +208,12 @@
         state.tone = s.tone;
         setActiveSeg("#tone", "tone", s.tone);
       }
+      $("#lessonTime").value = s.lessonTime || "";
+      $("#lessonNo").value = s.lessonNo || "";
       $("#topic").value = s.topic || "";
+      $("#homework").value = s.homework || "";
       $("#classNote").value = s.classNote || "";
+      $("#feedbackTemplate").value = s.feedbackTemplate || templateApi.DEFAULT_FEEDBACK_TEMPLATE;
       if (Array.isArray(s.students) && s.students.length) {
         s.students.forEach((st) => addStudent(st.name, st.keywords));
         return true;
@@ -213,19 +234,29 @@
     $("#addStudent").addEventListener("click", () => addStudent());
     $("#generate").addEventListener("click", generate);
     $("#copyAll").addEventListener("click", copyAll);
+    $("#resetTemplate").addEventListener("click", () => {
+      $("#feedbackTemplate").value = templateApi.DEFAULT_FEEDBACK_TEMPLATE;
+      saveState();
+      toast("已恢复默认反馈格式");
+    });
     $("#backToEdit").addEventListener("click", () => {
       $("#resultPanel").classList.add("hidden");
       $("#inputPanel").classList.remove("hidden");
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
-    $("#topic").addEventListener("input", saveState);
-    $("#classNote").addEventListener("input", saveState);
+    ["#lessonTime", "#lessonNo", "#topic", "#homework", "#classNote", "#feedbackTemplate"].forEach((sel) => {
+      $(sel).addEventListener("input", saveState);
+    });
 
     const restored = loadState();
     if (!restored) {
       // 预填示例，方便老师演示时立刻看到效果
+      $("#lessonTime").value = "2026年6月15日";
+      $("#lessonNo").value = "第8次课";
       $("#topic").value = "一次函数图像与性质";
+      $("#homework").value = "完成一次函数专题试卷第 1-12 题，整理课堂错题 2 道";
       $("#classNote").value = "基础题完成度不错，综合题里定义域和取值范围还容易混";
+      $("#feedbackTemplate").value = templateApi.DEFAULT_FEEDBACK_TEMPLATE;
       addStudent("张晨", "画图标注很规范，求交点坐标时偶尔跳步");
       addStudent("李思远", "能主动归纳 k 对图像的影响，应用题建模还需加强");
     }

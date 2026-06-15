@@ -3,9 +3,8 @@
  * ------------------------------------------------------------------
  * 当前为「初高中数学演示模式」：完全在本地用模板 + 词库生成，不需要任何 API Key。
  *
- * 接入真实大模型时：只改下面的 generateFeedback() 一个函数即可。
- * 已经预留好了 buildPrompt()，把它发给 DeepSeek / 通义 / 豆包 的
- * chat completions 接口，拿回文本填进每个学员即可。其余 UI 不用动。
+ * 接入真实大模型时：优先替换 buildTeacherComment() 或 generateFeedback()。
+ * 老师自定义模板由 templateEngine.js 渲染，后续可继续复用。
  * ------------------------------------------------------------------
  */
 
@@ -82,25 +81,21 @@ function splitKeywords(raw) {
 }
 
 /**
- * 演示模式：本地模板生成一段家长反馈
+ * 演示模式：本地模板生成「老师点评及宝贵建议」
  */
-function localGenerate({ category, topic, classNote, tone, student }) {
+function buildTeacherComment({ category, topic, classNote, tone, student }) {
   const bank = PHRASE[category] || PHRASE["数学"];
   const t = TONE[tone] || TONE["温暖鼓励"];
   const seed = hash(student.name + student.keywords + topic);
   const { highlight, improve } = splitKeywords(student.keywords);
 
   const lines = [];
-  lines.push(t.open(student.name || "同学"));
-
-  if (topic) lines.push(`今天的课程内容是「${topic}」。`);
-
-  if (classNote) lines.push(`班级整体情况：${classNote}。`);
+  if (classNote) lines.push(`结合今天班级整体情况来看，${classNote}。`);
 
   const praiseTpl = highlight
     ? pick(bank.praise, seed)
     : pick(bank.defaultPraise, seed);
-  lines.push(praiseTpl.replace("{kw}", highlight) + t.praiseEnd + "。");
+  lines.push(`${student.name || "同学"}${praiseTpl.replace("{kw}", highlight)}${t.praiseEnd}。`);
 
   if (improve) {
     const impTpl = pick(bank.improveLead, seed >> 2);
@@ -108,10 +103,20 @@ function localGenerate({ category, topic, classNote, tone, student }) {
   }
 
   lines.push(pick(bank.homeTip, seed >> 3));
-  lines.push(pick(bank.preview, seed >> 4));
   lines.push(t.end);
 
   return lines.join(t.warm ? "\n" : "");
+}
+
+function localGenerate(input) {
+  const templateApi = window.PFH_TEMPLATE;
+  const teacherComment = buildTeacherComment(input);
+  const context = templateApi.buildTemplateContext({
+    ...input,
+    teacherComment,
+  });
+
+  return templateApi.renderTemplate(input.feedbackTemplate, context);
 }
 
 /**
@@ -120,15 +125,38 @@ function localGenerate({ category, topic, classNote, tone, student }) {
 function buildPrompt({ category, topic, classNote, tone, student }) {
   return [
     `你是一位资深的初高中${category}老师，擅长跟家长沟通。`,
-    `请根据信息为学生写一段发给家长的课后反馈，语气：${tone}。`,
-    `要求：120-180字；先点名一个具体亮点，再用鼓励方式提一个可改进点，`,
-    `再给一句在家可配合的小建议，最后一句对下节课的期待；`,
+    `请根据信息为学生写一段「老师点评及宝贵建议」，语气：${tone}。`,
+    `要求：80-150字；先点名一个具体亮点，再用鼓励方式提一个可改进点，`,
+    `再给一句可执行的学习方法建议；`,
     `语言适合初高中学生家长阅读，不幼稚、不套话；`,
     `不攀比、不制造焦虑、不夸大承诺（如"一定能考上重点"）。`,
     `【今天主题】${topic || "（未填）"}`,
     `【班级整体】${classNote || "（未填）"}`,
     `【学生姓名】${student.name}`,
     `【今日表现关键词】${student.keywords || "（未填）"}`,
+  ].join("\n");
+}
+
+function buildFeedbackPrompt(input) {
+  const templateApi = window.PFH_TEMPLATE;
+  return [
+    `你是一名初高中数学老师的课后反馈助手。`,
+    `请严格按照老师专属模板输出完整课后反馈。`,
+    `不要改变栏目结构，不要新增模板之外的大段栏目。`,
+    `模板可用占位符如下：`,
+    templateApi.describePlaceholders(),
+    ``,
+    `老师专属模板：`,
+    input.feedbackTemplate || templateApi.DEFAULT_FEEDBACK_TEMPLATE,
+    ``,
+    `本次课程信息：`,
+    `时间：${input.lessonTime || "（未填）"}`,
+    `课次：${input.lessonNo || "（未填）"}`,
+    `学生：${input.student.name || "（未填）"}`,
+    `学习知识点：${input.topic || "（未填）"}`,
+    `作业布置：${input.homework || "（未填）"}`,
+    `班级整体：${input.classNote || "（未填）"}`,
+    `课堂表现关键词：${input.student.keywords || "（未填）"}`,
   ].join("\n");
 }
 
@@ -140,8 +168,9 @@ async function generateFeedback(input) {
   return localGenerate(input);
 
   // === 接入真实大模型时（示例，届时取消注释并实现 callLLM）===
-  // const prompt = buildPrompt(input);
+  // const prompt = buildFeedbackPrompt(input);
   // return await callLLM(prompt);
 }
 
 window.generateFeedback = generateFeedback;
+window.buildFeedbackPrompt = buildFeedbackPrompt;

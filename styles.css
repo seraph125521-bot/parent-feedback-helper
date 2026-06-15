@@ -75,8 +75,20 @@ main { flex: 1; padding: 12px 14px 24px; }
 }
 .hint { color: var(--ink-soft); font-weight: 400; font-size: 12px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; }
+.compact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.compact-grid label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
 
-input[type="text"] {
+input[type="text"],
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -86,7 +98,32 @@ input[type="text"] {
   outline: none;
   transition: border-color .15s, background .15s;
 }
-input[type="text"]:focus { border-color: var(--brand); background: #fff; }
+textarea {
+  min-height: 220px;
+  resize: vertical;
+  line-height: 1.55;
+}
+input[type="text"]:focus,
+textarea:focus { border-color: var(--brand); background: #fff; }
+
+.template-box {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfbfe;
+  padding: 12px;
+}
+.template-title { margin-bottom: 8px; }
+.template-title label { margin: 0; }
+.template-hint { margin: 8px 2px 0; }
+.btn-link {
+  border: none;
+  background: transparent;
+  color: var(--brand-press);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 0;
+  cursor: pointer;
+}
 
 /* Segmented control */
 .seg {
@@ -273,3 +310,13 @@ input[type="text"]:focus { border-color: var(--brand); background: #fff; }
   animation: pop .2s ease;
 }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, 8px);} to { opacity: 1; } }
+
+@media (max-width: 420px) {
+  .compact-grid { grid-template-columns: 1fr; }
+  .student-row {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .student-row .name { flex: 1 1 38%; }
+  .student-row .kw { flex: 1 1 calc(62% - 46px); }
+}

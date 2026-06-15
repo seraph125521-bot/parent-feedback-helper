@@ -22,9 +22,25 @@
     <main>
       <!-- 输入区 -->
       <section class="card" id="inputPanel">
+        <div class="field compact-grid">
+          <div>
+            <label>上课时间</label>
+            <input type="text" id="lessonTime" placeholder="例如：2026年6月15日" />
+          </div>
+          <div>
+            <label>课次</label>
+            <input type="text" id="lessonNo" placeholder="例如：第8次课" />
+          </div>
+        </div>
+
         <div class="field">
           <label>今天的数学主题 <span class="hint">（教了什么）</span></label>
           <input type="text" id="topic" placeholder="例如：一次函数图像 / 三角恒等变换 / 立体几何线面关系 / 导数应用" />
+        </div>
+
+        <div class="field">
+          <label>作业布置</label>
+          <input type="text" id="homework" placeholder="例如：完成一次函数专题试卷第 1-12 题，整理错题 2 道" />
         </div>
 
         <div class="field">
@@ -50,6 +66,15 @@
           </div>
         </div>
 
+        <div class="field template-box">
+          <div class="row-between template-title">
+            <label>老师专属反馈格式</label>
+            <button type="button" class="btn-link" id="resetTemplate">恢复默认</button>
+          </div>
+          <textarea id="feedbackTemplate" rows="10"></textarea>
+          <p class="hint template-hint">可用占位符：{lessonTime}、{lessonNo}、{studentName}、{knowledgePoints}、{homework}、{teacherComment}</p>
+        </div>
+
         <button type="button" class="btn-primary" id="generate">一键生成全班反馈</button>
         <p class="mock-note" id="mockNote">当前为初高中数学演示模式（本地模板生成）。接入大模型后内容会更自然、更个性化。</p>
       </section>
@@ -72,6 +97,7 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <script src="templateEngine.js"></script>
   <script src="generator.js"></script>
   <script src="app.js"></script>
 </body>
