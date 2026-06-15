@@ -67,12 +67,23 @@
         </div>
 
         <div class="field template-box">
-          <div class="row-between template-title">
-            <label>老师专属反馈格式</label>
-            <button type="button" class="btn-link" id="resetTemplate">恢复默认</button>
+          <div class="template-title">
+            <div>
+              <label>我的发送格式 <span class="pill">可选</span></label>
+              <p class="template-copy">如果机构有固定格式，直接改这里；没有就用推荐格式。这个设置会自动保存，之后每次生成都会按它来写。</p>
+            </div>
+            <button type="button" class="btn-link" id="resetTemplate">使用推荐格式</button>
           </div>
           <textarea id="feedbackTemplate" rows="10"></textarea>
-          <p class="hint template-hint">可用占位符：{lessonTime}、{lessonNo}、{studentName}、{knowledgePoints}、{homework}、{teacherComment}</p>
+          <div class="token-panel" aria-label="可插入的自动填充项">
+            <span class="token-label">点一下插入自动填充项：</span>
+            <button type="button" class="token-btn" data-token="{lessonTime}">上课时间</button>
+            <button type="button" class="token-btn" data-token="{lessonNo}">课次</button>
+            <button type="button" class="token-btn" data-token="{studentName}">学生姓名</button>
+            <button type="button" class="token-btn" data-token="{knowledgePoints}">学习知识点</button>
+            <button type="button" class="token-btn" data-token="{homework}">作业布置</button>
+            <button type="button" class="token-btn" data-token="{teacherComment}">老师点评</button>
+          </div>
         </div>
 
         <button type="button" class="btn-primary" id="generate">一键生成全班反馈</button>

@@ -112,10 +112,56 @@ textarea:focus { border-color: var(--brand); background: #fff; }
   background: #fbfbfe;
   padding: 12px;
 }
-.template-title { margin-bottom: 8px; }
+.template-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
 .template-title label { margin: 0; }
-.template-hint { margin: 8px 2px 0; }
+.template-copy {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin-left: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-press);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+.token-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.token-label {
+  flex: 1 0 100%;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+.token-btn {
+  border: 1px solid #cfe0ff;
+  background: #fff;
+  color: var(--brand-press);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
 .btn-link {
+  flex: 0 0 auto;
   border: none;
   background: transparent;
   color: var(--brand-press);
@@ -153,18 +199,18 @@ textarea:focus { border-color: var(--brand); background: #fff; }
 /* Student list */
 .student-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
 .student-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(76px, 0.34fr) minmax(0, 1fr) 38px;
   gap: 8px;
   align-items: center;
 }
 .student-row .name {
-  flex: 0 0 32%;
+  min-width: 0;
 }
 .student-row .kw {
-  flex: 1;
+  min-width: 0;
 }
 .student-row .del {
-  flex: 0 0 auto;
   width: 38px;
   height: 38px;
   border: none;
@@ -314,9 +360,19 @@ textarea:focus { border-color: var(--brand); background: #fff; }
 @media (max-width: 420px) {
   .compact-grid { grid-template-columns: 1fr; }
   .student-row {
-    align-items: stretch;
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) 38px;
+    align-items: center;
   }
-  .student-row .name { flex: 1 1 38%; }
-  .student-row .kw { flex: 1 1 calc(62% - 46px); }
+  .student-row .name { grid-column: 1; }
+  .student-row .del { grid-column: 2; grid-row: 1; }
+  .student-row .kw { grid-column: 1 / -1; }
+  .template-title { flex-direction: column; gap: 8px; }
+  .btn-link { align-self: flex-start; }
+}
+
+@media (max-width: 360px) {
+  main { padding-left: 10px; padding-right: 10px; }
+  .card { padding-left: 12px; padding-right: 12px; }
+  input[type="text"],
+  textarea { font-size: 14px; padding-left: 11px; padding-right: 11px; }
 }

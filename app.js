@@ -228,6 +228,19 @@
     });
   }
 
+  function insertTemplateToken(token) {
+    const textarea = $("#feedbackTemplate");
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+    const before = textarea.value.slice(0, start);
+    const after = textarea.value.slice(end);
+    textarea.value = `${before}${token}${after}`;
+    const nextPos = start + token.length;
+    textarea.focus();
+    textarea.setSelectionRange(nextPos, nextPos);
+    saveState();
+  }
+
   /* ---------- 初始化 ---------- */
   function init() {
     bindSeg("#tone", "tone", "tone");
@@ -238,6 +251,9 @@
       $("#feedbackTemplate").value = templateApi.DEFAULT_FEEDBACK_TEMPLATE;
       saveState();
       toast("已恢复默认反馈格式");
+    });
+    document.querySelectorAll(".token-btn").forEach((btn) => {
+      btn.addEventListener("click", () => insertTemplateToken(btn.dataset.token));
     });
     $("#backToEdit").addEventListener("click", () => {
       $("#resultPanel").classList.add("hidden");
