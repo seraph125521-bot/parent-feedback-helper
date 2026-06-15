@@ -13,76 +13,67 @@
       <div class="brand">
         <span class="logo">数</span>
         <div>
-          <h1>课后反馈助手</h1>
-          <p class="tagline">填几句课堂观察，自动生成发给家长的初高中数学课反馈</p>
+          <h1 id="viewTitle">写反馈</h1>
+          <p class="tagline" id="viewTagline">填几句课堂观察，自动生成发给家长的初高中数学课反馈</p>
         </div>
       </div>
     </header>
 
     <main>
-      <!-- 输入区 -->
-      <section class="card" id="inputPanel">
-        <div class="field compact-grid">
-          <div>
-            <label>上课时间</label>
-            <input type="text" id="lessonTime" placeholder="例如：2026年6月15日" />
+      <!-- ============ 视图 1：写反馈 ============ -->
+      <section class="view" id="view-write">
+        <!-- 课程信息 -->
+        <div class="card">
+          <div class="card-title">
+            <span class="card-step">1</span>
+            <h2>这节课的信息</h2>
           </div>
-          <div>
-            <label>课次</label>
-            <input type="text" id="lessonNo" placeholder="例如：第8次课" />
+
+          <div class="field compact-grid">
+            <div>
+              <label>上课时间</label>
+              <input type="text" id="lessonTime" placeholder="例如：2026年6月15日" />
+            </div>
+            <div>
+              <label>课次</label>
+              <input type="text" id="lessonNo" placeholder="例如：第8次课" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>今天的数学主题 <span class="hint">（教了什么）</span></label>
+            <input type="text" id="topic" placeholder="例如：一次函数图像 / 三角恒等变换 / 立体几何线面关系 / 导数应用" />
+          </div>
+
+          <div class="field">
+            <label>作业布置</label>
+            <input type="text" id="homework" placeholder="例如：完成一次函数专题试卷第 1-12 题，整理错题 2 道" />
+          </div>
+
+          <div class="field" style="margin-bottom:0">
+            <label>班级整体表现 <span class="hint">（选填，所有反馈会带上这个氛围）</span></label>
+            <input type="text" id="classNote" placeholder="例如：基础题完成度不错，综合题里条件分析和书写规范还需加强" />
           </div>
         </div>
 
-        <div class="field">
-          <label>今天的数学主题 <span class="hint">（教了什么）</span></label>
-          <input type="text" id="topic" placeholder="例如：一次函数图像 / 三角恒等变换 / 立体几何线面关系 / 导数应用" />
-        </div>
-
-        <div class="field">
-          <label>作业布置</label>
-          <input type="text" id="homework" placeholder="例如：完成一次函数专题试卷第 1-12 题，整理错题 2 道" />
-        </div>
-
-        <div class="field">
-          <label>班级整体表现 <span class="hint">（选填，所有反馈会带上这个氛围）</span></label>
-          <input type="text" id="classNote" placeholder="例如：基础题完成度不错，综合题里条件分析和书写规范还需加强" />
-        </div>
-
-        <div class="field">
-          <div class="row-between">
-            <label>学员名单</label>
-            <span class="hint" id="studentCount">0 名</span>
+        <!-- 学员名单 -->
+        <div class="card">
+          <div class="card-title">
+            <span class="card-step">2</span>
+            <h2>这节课的学员</h2>
+            <span class="hint card-count" id="studentCount">0 名</span>
           </div>
+
           <div id="studentList" class="student-list"></div>
           <button type="button" class="btn-add" id="addStudent">＋ 添加学员</button>
-        </div>
 
-        <div class="field">
-          <label>反馈语气</label>
-          <div class="seg" id="tone">
-            <button type="button" class="seg-btn active" data-tone="温暖鼓励">温暖鼓励</button>
-            <button type="button" class="seg-btn" data-tone="专业简洁">专业简洁</button>
-            <button type="button" class="seg-btn" data-tone="活泼亲切">活泼亲切</button>
-          </div>
-        </div>
-
-        <div class="field template-box">
-          <div class="template-title">
-            <div>
-              <label>我的发送格式 <span class="pill">可选</span></label>
-              <p class="template-copy">如果机构有固定格式，直接改这里；没有就用推荐格式。这个设置会自动保存，之后每次生成都会按它来写。</p>
+          <div class="field" style="margin:18px 0 0">
+            <label>反馈语气</label>
+            <div class="seg" id="tone">
+              <button type="button" class="seg-btn active" data-tone="温暖鼓励">温暖鼓励</button>
+              <button type="button" class="seg-btn" data-tone="专业简洁">专业简洁</button>
+              <button type="button" class="seg-btn" data-tone="活泼亲切">活泼亲切</button>
             </div>
-            <button type="button" class="btn-link" id="resetTemplate">使用推荐格式</button>
-          </div>
-          <textarea id="feedbackTemplate" rows="10"></textarea>
-          <div class="token-panel" aria-label="可插入的自动填充项">
-            <span class="token-label">点一下插入自动填充项：</span>
-            <button type="button" class="token-btn" data-token="{lessonTime}">上课时间</button>
-            <button type="button" class="token-btn" data-token="{lessonNo}">课次</button>
-            <button type="button" class="token-btn" data-token="{studentName}">学生姓名</button>
-            <button type="button" class="token-btn" data-token="{knowledgePoints}">学习知识点</button>
-            <button type="button" class="token-btn" data-token="{homework}">作业布置</button>
-            <button type="button" class="token-btn" data-token="{teacherComment}">老师点评</button>
           </div>
         </div>
 
@@ -90,20 +81,57 @@
         <p class="mock-note" id="mockNote">当前为初高中数学演示模式（本地模板生成）。接入大模型后内容会更自然、更个性化。</p>
       </section>
 
-      <!-- 结果区 -->
-      <section id="resultPanel" class="result-panel hidden">
+      <!-- ============ 视图 2：我的格式 ============ -->
+      <section class="view hidden" id="view-format">
+        <div class="card intro-card">
+          <h2>设置你习惯的发送格式</h2>
+          <p class="intro-copy">就像你平时怎么发给家长一样，调好一次，之后每次生成都会照这个来。下面每一栏都可以<strong>开关、上下移动、改小标题</strong>。</p>
+        </div>
+
+        <div class="card">
+          <div class="field" style="margin-bottom:14px">
+            <label>开头标题</label>
+            <input type="text" id="tplTitle" placeholder="例如：课后反馈 / 今日课堂小结" />
+          </div>
+
+          <label class="builder-label">包含哪些栏目（拖动不需要，点上下箭头排序）</label>
+          <div id="sectionBuilder" class="section-builder"></div>
+
+          <button type="button" class="btn-ghost btn-reset-tpl" id="resetTemplate">↺ 恢复推荐格式</button>
+        </div>
+
+        <div class="card preview-card">
+          <div class="card-title">
+            <h2>家长会收到这样的反馈</h2>
+            <span class="preview-tag">实时预览</span>
+          </div>
+          <pre id="tplPreview" class="tpl-preview"></pre>
+        </div>
+      </section>
+
+      <!-- ============ 视图 3：生成结果 ============ -->
+      <section class="view hidden" id="view-result">
         <div class="result-head">
+          <button type="button" class="btn-back-icon" id="backToEdit" aria-label="返回">←</button>
           <h2>生成结果 <span id="resultCount" class="badge"></span></h2>
           <button type="button" class="btn-ghost" id="copyAll">复制全部</button>
         </div>
         <div id="results"></div>
-        <button type="button" class="btn-ghost btn-back" id="backToEdit">← 返回修改</button>
+        <button type="button" class="btn-primary btn-regenerate" id="regenerate">返回修改 / 重新生成</button>
       </section>
     </main>
 
-    <footer class="footer">
-      <span>初高中数学课后反馈助手 · MVP 演示版</span>
-    </footer>
+    <!-- 底部导航 -->
+    <nav class="tabbar" id="tabbar">
+      <button type="button" class="tab active" data-view="write">
+        <span class="tab-ico">✏️</span>
+        <span class="tab-txt">写反馈</span>
+      </button>
+      <button type="button" class="tab" data-view="format">
+        <span class="tab-ico">🧩</span>
+        <span class="tab-txt">我的格式</span>
+      </button>
+    </nav>
   </div>
 
   <div id="toast" class="toast hidden"></div>

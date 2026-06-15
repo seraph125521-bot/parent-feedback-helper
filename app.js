@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "pfh_math_sec_state_v1";
+  const STORAGE_KEY = "pfh_math_sec_state_v2";
+  const templateApi = window.PFH_TEMPLATE;
 
   const state = {
     category: "数学",
@@ -11,14 +12,49 @@
     topic: "",
     homework: "",
     classNote: "",
-    feedbackTemplate: "",
+    templateConfig: deepClone(templateApi.DEFAULT_TEMPLATE_CONFIG),
     students: [],
+  };
+
+  // 「我的格式」预览用的示例数据
+  const PREVIEW_SAMPLE = {
+    lessonTime: "2026年6月15日",
+    lessonNo: "第8次课",
+    studentName: "张晨",
+    knowledgePoints: "一次函数图像与性质",
+    homework: "完成一次函数专题试卷第 1-12 题，整理课堂错题 2 道",
+    teacherComment:
+      "张晨家长好～\n张晨今天画图标注很规范，这一步值得肯定。\n求交点坐标时偶尔跳步，建议把步骤写完整，相信下次会更好。\n继续加油，我们一起陪着孩子把基础打扎实。",
+  };
+
+  const VIEW_META = {
+    write: { title: "写反馈", tagline: "填几句课堂观察，自动生成发给家长的初高中数学课反馈" },
+    format: { title: "我的格式", tagline: "调好一次发送格式，之后每次生成都按它来" },
+    result: { title: "生成结果", tagline: "逐条复制，或一键复制全部发给家长" },
   };
 
   const $ = (sel) => document.querySelector(sel);
   const studentList = $("#studentList");
   const studentCount = $("#studentCount");
-  const templateApi = window.PFH_TEMPLATE;
+
+  /* ---------- 视图路由 ---------- */
+  function showView(name) {
+    document.querySelectorAll(".view").forEach((v) => v.classList.add("hidden"));
+    const view = $(`#view-${name}`);
+    if (view) view.classList.remove("hidden");
+
+    document.querySelectorAll(".tab").forEach((t) => {
+      t.classList.toggle("active", t.dataset.view === name);
+    });
+
+    const meta = VIEW_META[name] || VIEW_META.write;
+    $("#viewTitle").textContent = meta.title;
+    $("#viewTagline").textContent = meta.tagline;
+
+    // 结果页隐藏底部主导航，避免误触
+    $("#tabbar").classList.toggle("hidden", name === "result");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   /* ---------- 学员行 ---------- */
   function makeStudentRow(name = "", keywords = "") {
@@ -68,6 +104,86 @@
     });
   }
 
+  /* ---------- 我的格式：可视化构建器 ---------- */
+  function renderBuilder() {
+    const cfg = templateApi.normalizeConfig(state.templateConfig);
+    state.templateConfig = cfg; // 回写规范化后的配置
+    $("#tplTitle").value = cfg.title;
+
+    const builder = $("#sectionBuilder");
+    builder.innerHTML = "";
+
+    const metaByKey = {};
+    templateApi.SECTION_META.forEach((m) => (metaByKey[m.key] = m));
+
+    cfg.sections.forEach((sec, idx) => {
+      const meta = metaByKey[sec.key] || { name: sec.key, hint: "" };
+      const item = document.createElement("div");
+      item.className = "sec-item" + (sec.enabled ? "" : " off");
+      item.dataset.key = sec.key;
+      item.innerHTML = `
+        <div class="sec-top">
+          <label class="switch" title="开启 / 关闭这一栏">
+            <input type="checkbox" class="sec-toggle" ${sec.enabled ? "checked" : ""} />
+            <span class="slider"></span>
+          </label>
+          <div class="sec-info">
+            <div class="sec-name">${escapeHtml(meta.name)}</div>
+            <div class="sec-hint">${escapeHtml(meta.hint)}</div>
+          </div>
+          <div class="sec-move">
+            <button type="button" class="mv mv-up" ${idx === 0 ? "disabled" : ""} aria-label="上移">↑</button>
+            <button type="button" class="mv mv-down" ${idx === cfg.sections.length - 1 ? "disabled" : ""} aria-label="下移">↓</button>
+          </div>
+        </div>
+        <div class="sec-heading-row">
+          <span class="sec-heading-label">小标题</span>
+          <input type="text" class="sec-heading" value="${escapeAttr(sec.heading)}" placeholder="这一栏在反馈里显示的标题" />
+        </div>
+      `;
+
+      item.querySelector(".sec-toggle").addEventListener("change", (e) => {
+        sec.enabled = e.target.checked;
+        item.classList.toggle("off", !sec.enabled);
+        saveState();
+        updatePreview();
+      });
+      item.querySelector(".sec-heading").addEventListener("input", (e) => {
+        sec.heading = e.target.value;
+        saveState();
+        updatePreview();
+      });
+      item.querySelector(".mv-up").addEventListener("click", () => moveSection(idx, -1));
+      item.querySelector(".mv-down").addEventListener("click", () => moveSection(idx, 1));
+
+      builder.appendChild(item);
+    });
+
+    updatePreview();
+  }
+
+  function moveSection(index, delta) {
+    const sections = state.templateConfig.sections;
+    const target = index + delta;
+    if (target < 0 || target >= sections.length) return;
+    const [moved] = sections.splice(index, 1);
+    sections.splice(target, 0, moved);
+    saveState();
+    renderBuilder();
+  }
+
+  function updatePreview() {
+    const text = templateApi.renderFromConfig(state.templateConfig, PREVIEW_SAMPLE);
+    $("#tplPreview").textContent = text;
+  }
+
+  function resetTemplate() {
+    state.templateConfig = deepClone(templateApi.DEFAULT_TEMPLATE_CONFIG);
+    saveState();
+    renderBuilder();
+    toast("已恢复推荐格式");
+  }
+
   /* ---------- 生成 ---------- */
   async function generate() {
     syncStudents();
@@ -76,7 +192,6 @@
     state.topic = $("#topic").value.trim();
     state.homework = $("#homework").value.trim();
     state.classNote = $("#classNote").value.trim();
-    state.feedbackTemplate = $("#feedbackTemplate").value.trim();
 
     const valid = state.students.filter((s) => s.name);
     if (valid.length === 0) {
@@ -99,7 +214,7 @@
         topic: state.topic,
         homework: state.homework,
         classNote: state.classNote,
-        feedbackTemplate: state.feedbackTemplate,
+        templateConfig: state.templateConfig,
         tone: state.tone,
         student,
       });
@@ -107,9 +222,7 @@
     }
 
     $("#resultCount").textContent = `${valid.length} 条`;
-    $("#inputPanel").classList.add("hidden");
-    $("#resultPanel").classList.remove("hidden");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    showView("result");
 
     btn.disabled = false;
     btn.textContent = "一键生成全班反馈";
@@ -153,6 +266,10 @@
   }
 
   /* ---------- 工具 ---------- */
+  function deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
   function copyText(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
@@ -181,7 +298,10 @@
   }
 
   function escapeAttr(s) {
-    return String(s).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   /* ---------- 本地缓存（防止误刷丢内容） ---------- */
@@ -194,11 +314,12 @@
         topic: $("#topic").value,
         homework: $("#homework").value,
         classNote: $("#classNote").value,
-        feedbackTemplate: $("#feedbackTemplate").value,
+        templateConfig: state.templateConfig,
         students: state.students,
       }));
     } catch (e) {}
   }
+
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -213,7 +334,9 @@
       $("#topic").value = s.topic || "";
       $("#homework").value = s.homework || "";
       $("#classNote").value = s.classNote || "";
-      $("#feedbackTemplate").value = s.feedbackTemplate || templateApi.DEFAULT_FEEDBACK_TEMPLATE;
+      if (s.templateConfig) {
+        state.templateConfig = templateApi.normalizeConfig(s.templateConfig);
+      }
       if (Array.isArray(s.students) && s.students.length) {
         s.students.forEach((st) => addStudent(st.name, st.keywords));
         return true;
@@ -221,24 +344,12 @@
     } catch (e) {}
     return false;
   }
+
   function setActiveSeg(containerSel, dataKey, value) {
     const container = $(containerSel);
     container.querySelectorAll(".seg-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset[dataKey] === value);
     });
-  }
-
-  function insertTemplateToken(token) {
-    const textarea = $("#feedbackTemplate");
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
-    const before = textarea.value.slice(0, start);
-    const after = textarea.value.slice(end);
-    textarea.value = `${before}${token}${after}`;
-    const nextPos = start + token.length;
-    textarea.focus();
-    textarea.setSelectionRange(nextPos, nextPos);
-    saveState();
   }
 
   /* ---------- 初始化 ---------- */
@@ -247,20 +358,22 @@
     $("#addStudent").addEventListener("click", () => addStudent());
     $("#generate").addEventListener("click", generate);
     $("#copyAll").addEventListener("click", copyAll);
-    $("#resetTemplate").addEventListener("click", () => {
-      $("#feedbackTemplate").value = templateApi.DEFAULT_FEEDBACK_TEMPLATE;
+    $("#resetTemplate").addEventListener("click", resetTemplate);
+    $("#backToEdit").addEventListener("click", () => showView("write"));
+    $("#regenerate").addEventListener("click", () => showView("write"));
+
+    // 底部导航
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => showView(tab.dataset.view));
+    });
+
+    // 标题 + 课程信息输入自动保存
+    $("#tplTitle").addEventListener("input", (e) => {
+      state.templateConfig.title = e.target.value;
       saveState();
-      toast("已恢复默认反馈格式");
+      updatePreview();
     });
-    document.querySelectorAll(".token-btn").forEach((btn) => {
-      btn.addEventListener("click", () => insertTemplateToken(btn.dataset.token));
-    });
-    $("#backToEdit").addEventListener("click", () => {
-      $("#resultPanel").classList.add("hidden");
-      $("#inputPanel").classList.remove("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-    ["#lessonTime", "#lessonNo", "#topic", "#homework", "#classNote", "#feedbackTemplate"].forEach((sel) => {
+    ["#lessonTime", "#lessonNo", "#topic", "#homework", "#classNote"].forEach((sel) => {
       $(sel).addEventListener("input", saveState);
     });
 
@@ -272,11 +385,12 @@
       $("#topic").value = "一次函数图像与性质";
       $("#homework").value = "完成一次函数专题试卷第 1-12 题，整理课堂错题 2 道";
       $("#classNote").value = "基础题完成度不错，综合题里定义域和取值范围还容易混";
-      $("#feedbackTemplate").value = templateApi.DEFAULT_FEEDBACK_TEMPLATE;
       addStudent("张晨", "画图标注很规范，求交点坐标时偶尔跳步");
       addStudent("李思远", "能主动归纳 k 对图像的影响，应用题建模还需加强");
     }
     syncStudents();
+    renderBuilder();
+    showView("write");
   }
 
   document.addEventListener("DOMContentLoaded", init);

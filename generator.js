@@ -116,6 +116,10 @@ function localGenerate(input) {
     teacherComment,
   });
 
+  // 优先用老师在「我的格式」里设置的结构化栏目配置
+  if (input.templateConfig) {
+    return templateApi.renderFromConfig(input.templateConfig, context);
+  }
   return templateApi.renderTemplate(input.feedbackTemplate, context);
 }
 
@@ -139,15 +143,15 @@ function buildPrompt({ category, topic, classNote, tone, student }) {
 
 function buildFeedbackPrompt(input) {
   const templateApi = window.PFH_TEMPLATE;
+  const sectionGuide = input.templateConfig
+    ? templateApi.describeSections(input.templateConfig)
+    : templateApi.describePlaceholders();
   return [
     `你是一名初高中数学老师的课后反馈助手。`,
-    `请严格按照老师专属模板输出完整课后反馈。`,
-    `不要改变栏目结构，不要新增模板之外的大段栏目。`,
-    `模板可用占位符如下：`,
-    templateApi.describePlaceholders(),
-    ``,
-    `老师专属模板：`,
-    input.feedbackTemplate || templateApi.DEFAULT_FEEDBACK_TEMPLATE,
+    `请严格按照老师设置的栏目顺序输出完整课后反馈。`,
+    `不要改变栏目结构，不要新增老师之外的大段栏目。`,
+    `老师设置的栏目如下（按顺序）：`,
+    sectionGuide,
     ``,
     `本次课程信息：`,
     `时间：${input.lessonTime || "（未填）"}`,
