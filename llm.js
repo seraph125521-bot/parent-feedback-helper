@@ -17,7 +17,7 @@
   const ENDPOINT = "https://api.deepseek.com/chat/completions";
   const DEFAULT_TIMEOUT = 30000;
   // ⚠️ 警告：仅限本地测试或内部使用，绝对不要把带有真实 Key 的代码公开分享！
-  const API_KEY = "这里填入你的DeepSeek_API_Key";
+  const API_KEY = "sk-9d480f9739934ac58712b384e0e4eabc";
 
   let enabled = false;
   try {
