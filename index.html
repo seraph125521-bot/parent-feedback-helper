@@ -75,6 +75,17 @@
               <button type="button" class="seg-btn" data-tone="活泼亲切">活泼亲切</button>
             </div>
           </div>
+
+          <div class="ai-toggle" id="aiToggleRow">
+            <label class="switch" title="开启 / 关闭 AI 智能生成">
+              <input type="checkbox" id="aiToggle" />
+              <span class="slider"></span>
+            </label>
+            <div class="ai-toggle-info">
+              <div class="ai-toggle-name">AI 智能生成 <span class="ai-tag">DeepSeek</span></div>
+              <div class="ai-toggle-hint">开启后由大模型撰写更自然的点评，仍按你的「我的格式」排版；服务异常会自动回退本地模板。</div>
+            </div>
+          </div>
         </div>
 
         <button type="button" class="btn-primary" id="generate">一键生成全班反馈</button>
@@ -142,6 +153,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="templateEngine.js"></script>
+  <script src="llm.js"></script>
   <script src="generator.js"></script>
   <script src="app.js"></script>
 </body>

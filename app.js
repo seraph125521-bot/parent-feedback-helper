@@ -184,6 +184,28 @@
     toast("已恢复推荐格式");
   }
 
+  /* ---------- AI 智能生成开关 ---------- */
+  function bindAiToggle() {
+    const toggle = $("#aiToggle");
+    if (!toggle || !window.PFH_LLM) return;
+    toggle.checked = window.PFH_LLM.isEnabled();
+    updateMockNote(toggle.checked);
+    toggle.addEventListener("change", (e) => {
+      const on = e.target.checked;
+      window.PFH_LLM.setEnabled(on);
+      updateMockNote(on);
+      toast(on ? "已开启 AI 智能生成（DeepSeek）" : "已切换回本地模板生成");
+    });
+  }
+
+  function updateMockNote(aiOn) {
+    const note = $("#mockNote");
+    if (!note) return;
+    note.textContent = aiOn
+      ? "已开启 AI 智能生成：点评由 DeepSeek 撰写，仍按你的「我的格式」排版；服务异常会自动回退本地模板。"
+      : "当前为本地模板生成模式。打开上方「AI 智能生成」可让大模型写出更自然、更个性化的点评。";
+  }
+
   /* ---------- 生成 ---------- */
   async function generate() {
     syncStudents();
@@ -206,6 +228,9 @@
     const results = $("#results");
     results.innerHTML = "";
 
+    let aiFellBack = false;
+    const aiOn = !!(window.PFH_LLM && window.PFH_LLM.isEnabled());
+
     for (const student of valid) {
       const text = await window.generateFeedback({
         category: state.category,
@@ -217,12 +242,15 @@
         templateConfig: state.templateConfig,
         tone: state.tone,
         student,
+        onFallback: () => { aiFellBack = true; },
       });
       results.appendChild(makeResultCard(student.name, text));
     }
 
     $("#resultCount").textContent = `${valid.length} 条`;
     showView("result");
+
+    if (aiOn && aiFellBack) toast("AI 暂不可用，已用本地模板生成");
 
     btn.disabled = false;
     btn.textContent = "一键生成全班反馈";
@@ -361,6 +389,9 @@
     $("#resetTemplate").addEventListener("click", resetTemplate);
     $("#backToEdit").addEventListener("click", () => showView("write"));
     $("#regenerate").addEventListener("click", () => showView("write"));
+
+    // AI 智能生成开关（DeepSeek）
+    bindAiToggle();
 
     // 栏目折叠
     $("#builderToggle").addEventListener("click", () => {

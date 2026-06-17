@@ -141,6 +141,56 @@ function buildPrompt({ category, topic, classNote, tone, student }) {
   ].join("\n");
 }
 
+/**
+ * 给 DeepSeek 的对话消息：让大模型只产出「老师点评及宝贵建议」正文，
+ * 其余栏目（时间/作业/标题等）仍由 templateEngine 按「我的格式」渲染，
+ * 保证输出始终保持老师设定的模板结构。
+ */
+function buildCommentMessages({ category, topic, classNote, tone, student }) {
+  const system = [
+    `你是一位资深的初高中${category}老师，擅长用真诚、专业的语言和家长沟通。`,
+    `你只输出「老师点评及宝贵建议」这一段正文，不要输出标题、时间、作业等其他栏目，不要使用 Markdown 或编号。`,
+    `写作要求：`,
+    `1. 80-150 字，2-4 句话；`,
+    `2. 先点名一个具体亮点，再用鼓励的方式提一个可改进点，最后给一句可执行的学习方法建议；`,
+    `3. 语言适合初高中学生家长阅读，自然、不套话、不幼稚；`,
+    `4. 不攀比、不制造焦虑、不夸大承诺（如"一定能考上重点"）。`,
+  ].join("\n");
+
+  const user = [
+    `请按上述要求写这段点评。`,
+    `语气：${tone}`,
+    `今天主题：${topic || "（未填）"}`,
+    `班级整体：${classNote || "（未填）"}`,
+    `学生姓名：${student.name || "（未填）"}`,
+    `今日表现关键词：${student.keywords || "（未填）"}`,
+  ].join("\n");
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ];
+}
+
+/**
+ * 大模型模式：用 DeepSeek 生成点评正文，再走老师的模板配置渲染。
+ */
+async function llmGenerate(input) {
+  const templateApi = window.PFH_TEMPLATE;
+  const messages = buildCommentMessages(input);
+  const teacherComment = await window.PFH_LLM.complete(messages);
+
+  const context = templateApi.buildTemplateContext({
+    ...input,
+    teacherComment,
+  });
+
+  if (input.templateConfig) {
+    return templateApi.renderFromConfig(input.templateConfig, context);
+  }
+  return templateApi.renderTemplate(input.feedbackTemplate, context);
+}
+
 function buildFeedbackPrompt(input) {
   const templateApi = window.PFH_TEMPLATE;
   const sectionGuide = input.templateConfig
@@ -166,15 +216,21 @@ function buildFeedbackPrompt(input) {
 
 /**
  * 统一入口。UI 只调用它。
+ * 开启「AI 智能生成」时优先走 DeepSeek；任何失败都自动回退本地模板，保证可用。
  */
 async function generateFeedback(input) {
+  if (window.PFH_LLM && window.PFH_LLM.isEnabled()) {
+    try {
+      return await llmGenerate(input);
+    } catch (err) {
+      console.warn("[PFH] 大模型生成失败，已回退本地模板：", err);
+      if (typeof input.onFallback === "function") input.onFallback(err);
+    }
+  }
   await new Promise((r) => setTimeout(r, 120));
   return localGenerate(input);
-
-  // === 接入真实大模型时（示例，届时取消注释并实现 callLLM）===
-  // const prompt = buildFeedbackPrompt(input);
-  // return await callLLM(prompt);
 }
 
 window.generateFeedback = generateFeedback;
 window.buildFeedbackPrompt = buildFeedbackPrompt;
+window.buildCommentMessages = buildCommentMessages;
