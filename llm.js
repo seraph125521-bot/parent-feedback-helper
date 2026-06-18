@@ -14,10 +14,8 @@
   "use strict";
 
   const ENABLE_KEY = "pfh_llm_enabled_v1";
-  const ENDPOINT = "https://api.deepseek.com/chat/completions";
+  const ENDPOINT = "/api/generate";
   const DEFAULT_TIMEOUT = 30000;
-  // ⚠️ 警告：仅限本地测试或内部使用，绝对不要把带有真实 Key 的代码公开分享！
-  const API_KEY = "sk-9d480f9739934ac58712b384e0e4eabc";
 
   let enabled = false;
   try {
@@ -42,12 +40,8 @@
     try {
       const resp = await fetch(ENDPOINT, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "deepseek-chat",
           messages,
           temperature: options.temperature != null ? options.temperature : 0.7,
           max_tokens: options.max_tokens != null ? options.max_tokens : 400,
@@ -57,12 +51,12 @@
 
       if (!resp.ok) {
         const detail = await safeJson(resp);
-        throw new Error((detail && detail.error && detail.error.message) || `服务返回 ${resp.status}`);
+        throw new Error((detail && detail.error) || `服务返回 ${resp.status}`);
       }
 
       const data = await resp.json();
-      const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-      if (!text || !text.trim()) throw new Error("大模型返回为空");
+      const text = (data && data.text) || "";
+      if (!text.trim()) throw new Error("大模型返回为空");
       return text.trim();
     } finally {
       clearTimeout(timer);
