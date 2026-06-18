@@ -1,7 +1,7 @@
-/*
+﻿/*
  * Frontend LLM client (PFH_LLM)
  * ------------------------------------------------------------------
- * This GitHub Pages build calls DeepSeek directly from the browser.
+ * This GitHub Pages build calls an LLM provider directly from the browser.
  * WARNING: the API key is visible in page source. Use only for temporary tests.
  *
  * Exposes: window.PFH_LLM
@@ -14,9 +14,25 @@
   "use strict";
 
   const ENABLE_KEY = "pfh_llm_enabled_v1";
-  const ENDPOINT = "https://api.deepseek.com/chat/completions";
   const DEFAULT_TIMEOUT = 30000;
-  const API_KEY = "sk-680519d42cf9450cb0b710f3ce691f2c";
+
+  // Change this to "zhipu" after filling Zhipu's API key below.
+  const ACTIVE_PROVIDER = "deepseek";
+
+  const PROVIDERS = {
+    deepseek: {
+      name: "DeepSeek",
+      endpoint: "https://api.deepseek.com/chat/completions",
+      model: "deepseek-chat",
+      apiKey: "sk-680519d42cf9450cb0b710f3ce691f2c",
+    },
+    zhipu: {
+      name: "Zhipu AI",
+      endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      model: "glm-4-flash",
+      apiKey: "这里填入你的智谱AI_API_Key",
+    },
+  };
 
   let enabled = false;
   try {
@@ -36,17 +52,22 @@
   }
 
   async function complete(messages, options = {}) {
+    const provider = PROVIDERS[ACTIVE_PROVIDER] || PROVIDERS.deepseek;
+    if (!provider.apiKey || provider.apiKey.includes("这里填入")) {
+      throw new Error(`${provider.name} API Key 未配置`);
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), options.timeout || DEFAULT_TIMEOUT);
     try {
-      const resp = await fetch(ENDPOINT, {
+      const resp = await fetch(provider.endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${API_KEY}`,
+          "Authorization": `Bearer ${provider.apiKey}`,
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
+          model: provider.model,
           messages,
           temperature: options.temperature != null ? options.temperature : 0.7,
           max_tokens: options.max_tokens != null ? options.max_tokens : 400,
@@ -56,7 +77,7 @@
 
       if (!resp.ok) {
         const detail = await safeJson(resp);
-        throw new Error((detail && detail.error && detail.error.message) || `服务返回 ${resp.status}`);
+        throw new Error(readErrorMessage(detail) || `${provider.name} 服务返回 ${resp.status}`);
       }
 
       const data = await resp.json();
@@ -76,5 +97,27 @@
     }
   }
 
-  window.PFH_LLM = { isEnabled, setEnabled, complete, ENDPOINT };
+  function readErrorMessage(detail) {
+    if (!detail) return "";
+    if (typeof detail.error === "string") return detail.error;
+    return (detail.error && detail.error.message) || detail.message || "";
+  }
+
+  function getProviderInfo() {
+    const provider = PROVIDERS[ACTIVE_PROVIDER] || PROVIDERS.deepseek;
+    return {
+      key: ACTIVE_PROVIDER,
+      name: provider.name,
+      endpoint: provider.endpoint,
+      model: provider.model,
+    };
+  }
+
+  window.PFH_LLM = {
+    isEnabled,
+    setEnabled,
+    complete,
+    getProviderInfo,
+    ENDPOINT: (PROVIDERS[ACTIVE_PROVIDER] || PROVIDERS.deepseek).endpoint,
+  };
 })();
