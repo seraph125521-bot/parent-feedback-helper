@@ -1,13 +1,13 @@
-/*
- * 前端大模型客户端（PFH_LLM）
+﻿/*
+ * 鍓嶇澶фā鍨嬪鎴风锛圥FH_LLM锛?
  * ------------------------------------------------------------------
- * 只负责把对话消息发给服务端代理 /api/generate，再拿回纯文本。
- * 密钥永远不在这里，前端只持有一个「是否开启 AI」的开关状态。
+ * 鍙礋璐ｆ妸瀵硅瘽娑堟伅鍙戠粰鏈嶅姟绔唬鐞?/api/generate锛屽啀鎷垮洖绾枃鏈€?
+ * 瀵嗛挜姘歌繙涓嶅湪杩欓噷锛屽墠绔彧鎸佹湁涓€涓€屾槸鍚﹀紑鍚?AI銆嶇殑寮€鍏崇姸鎬併€?
  *
- * 暴露：window.PFH_LLM
- *   isEnabled()              当前是否开启 AI 生成
- *   setEnabled(boolean)      切换并持久化到 localStorage
- *   complete(messages, opts) 返回 Promise<string>（点评正文）
+ * 鏆撮湶锛歸indow.PFH_LLM
+ *   isEnabled()              褰撳墠鏄惁寮€鍚?AI 鐢熸垚
+ *   setEnabled(boolean)      鍒囨崲骞舵寔涔呭寲鍒?localStorage
+ *   complete(messages, opts) 杩斿洖 Promise<string>锛堢偣璇勬鏂囷級
  * ------------------------------------------------------------------
  */
 (function () {
@@ -16,8 +16,8 @@
   const ENABLE_KEY = "pfh_llm_enabled_v1";
   const ENDPOINT = "https://api.deepseek.com/chat/completions";
   const DEFAULT_TIMEOUT = 30000;
-  // ⚠️ 警告：仅限本地测试或内部使用，绝对不要把带有真实 Key 的代码公开分享！
-  const API_KEY = "sk-9d480f9739934ac58712b384e0e4eabc";
+  // 鈿狅笍 璀﹀憡锛氫粎闄愭湰鍦版祴璇曟垨鍐呴儴浣跨敤锛岀粷瀵逛笉瑕佹妸甯︽湁鐪熷疄 Key 鐨勪唬鐮佸叕寮€鍒嗕韩锛?
+  const API_KEY = "sk-680519d42cf9450cb0b710f3ce691f2c";
 
   let enabled = false;
   try {
@@ -57,12 +57,12 @@
 
       if (!resp.ok) {
         const detail = await safeJson(resp);
-        throw new Error((detail && detail.error && detail.error.message) || `服务返回 ${resp.status}`);
+        throw new Error((detail && detail.error && detail.error.message) || `鏈嶅姟杩斿洖 ${resp.status}`);
       }
 
       const data = await resp.json();
       const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-      if (!text || !text.trim()) throw new Error("大模型返回为空");
+      if (!text || !text.trim()) throw new Error("澶фā鍨嬭繑鍥炰负绌?);
       return text.trim();
     } finally {
       clearTimeout(timer);
@@ -79,3 +79,4 @@
 
   window.PFH_LLM = { isEnabled, setEnabled, complete, ENDPOINT };
 })();
+
