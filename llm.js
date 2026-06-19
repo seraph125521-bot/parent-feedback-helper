@@ -24,7 +24,7 @@
       name: "DeepSeek",
       endpoint: "https://api.deepseek.com/chat/completions",
       model: "deepseek-chat",
-      apiKey: "sk-680519d42cf9450cb0b710f3ce691f2c",
+      apiKey: "sk-24478a24451d471ba17da93accfd996a",
     },
     zhipu: {
       name: "Zhipu AI",
