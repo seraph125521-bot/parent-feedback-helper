@@ -1,4 +1,10 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "functions": {
+    "api/generate.js": {
+      "maxDuration": 30,
+      "memory": 128
+    }
+  }
 }

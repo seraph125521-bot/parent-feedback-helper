@@ -146,7 +146,7 @@ function buildPrompt({ category, topic, classNote, tone, student }) {
  * 其余栏目（时间/作业/标题等）仍由 templateEngine 按「我的格式」渲染，
  * 保证输出始终保持老师设定的模板结构。
  */
-function buildCommentMessages({ category, topic, classNote, tone, student }) {
+function buildCommentMessages({ category, topic, classNote, tone, student, previousFeedback }) {
   const system = [
     `你要模仿"我"——一位资深初高中数学老师——的口吻，写"老师点评及宝贵建议"这一段正文。`,
     `你只输出这一段点评正文，不要输出标题、时间、作业等其他栏目，不要使用 Markdown、编号或表情符号。`,
@@ -180,6 +180,8 @@ function buildCommentMessages({ category, topic, classNote, tone, student }) {
     `班级整体：${classNote || "（未填）"}`,
     `学生姓名：${student.name || "（未填）"}`,
     `今日表现关键词：${student.keywords || "（未填）"}`,
+    previousFeedback ? `上次反馈参考：${previousFeedback}` : "",
+    previousFeedback ? `请体现连续跟进感，但必须结合本节新情况，不要复述或改写上次反馈。` : "",
   ].join("\n");
 
   return [
@@ -230,11 +232,140 @@ function buildFeedbackPrompt(input) {
   ].join("\n");
 }
 
+/* ==================================================================
+ * 一对一辅导模式
+ * 与大班课的区别：单个学生、更完整的服务汇报式反馈。
+ * 大模型只负责写「老师点评及建议」正文，其余栏目（基本信息 / 本节内容 /
+ * 作业 / 下次课计划）由本地按结构拼接，保证输出稳定。
+ * ================================================================== */
+
+/**
+ * 本地模式：把一对一的结构化输入拼成一段口语化的点评正文。
+ */
+function buildOneOnOneComment(input) {
+  const t = TONE[input.tone] || TONE["温暖鼓励"];
+  const parts = [];
+
+  const topicLine = input.topic
+    ? `本节课主要带孩子学习了${input.topic}`
+    : "本节课带孩子做了系统梳理";
+  parts.push(topicLine + (input.classContent ? `，并${input.classContent}` : "") + "。");
+
+  if (input.mastered) parts.push(`目前掌握比较好的是${input.mastered}。`);
+  if (input.weakness) parts.push(`还需要加强的是${input.weakness}，下一步会重点跟进。`);
+  if (input.practiceAdvice) parts.push(`课后建议：${input.practiceAdvice}。`);
+  if (input.parentAdvice) parts.push(`也希望家长配合：${input.parentAdvice}。`);
+
+  parts.push(t.end);
+  return parts.join(t.warm ? "\n" : "");
+}
+
+/**
+ * 给 DeepSeek 的对话消息：一对一点评正文（掌握情况 + 卡点 + 课后建议）。
+ */
+function buildOneOnOneMessages(input) {
+  const student = input.student || {};
+  const system = [
+    `你要模仿"我"——一位资深初高中数学一对一辅导老师——的口吻，写一段发给家长的"课后点评及建议"正文。`,
+    `这是一对一辅导，家长很在意孩子的个性化情况，请写得具体、有针对性、有跟进感。`,
+    `你只输出这一段点评正文，不要输出标题、时间、下次计划等其它栏目，不要使用 Markdown、编号或表情符号。`,
+    `【要求】`,
+    `1. 不写家长称谓，提到学生统一用"孩子"，不要把姓名当开头。`,
+    `2. 80-160 字，自然成段，按"本节内容 → 掌握情况 → 主要卡点 → 课后建议"展开，不要分一二三点。`,
+    `3. 朴实、口语、具体，紧扣给到的信息，不空泛套话；不攀比、不制造焦虑、不夸大承诺。`,
+    `4. 只谈初高中数学：知识点、解题方法、运算与书写规范、审题建模、错题整理等。`,
+  ].join("\n");
+
+  const toneHint = {
+    温暖鼓励: "多一点肯定和陪伴感。",
+    专业简洁: "更精炼、更客观，少寒暄。",
+    活泼亲切: "语气轻松一点，但不要油腻、不要用表情。",
+  };
+
+  const user = [
+    `请用"我"的口吻写这段一对一课后点评。`,
+    `语气微调：${toneHint[input.tone] || toneHint["温暖鼓励"]}`,
+    `学生：${student.name || "（未填）"}${student.grade ? `（${student.grade}）` : ""}`,
+    `本节主题：${input.topic || "（未填）"}`,
+    `课堂练习/讲解：${input.classContent || "（未填）"}`,
+    `已掌握：${input.mastered || "（未填）"}`,
+    `主要卡点：${input.weakness || "（未填）"}`,
+    `课后练习建议：${input.practiceAdvice || "（未填）"}`,
+    `家长配合建议：${input.parentAdvice || "（未填）"}`,
+    input.previousFeedback ? `上次反馈参考：${input.previousFeedback}` : "",
+    input.previousFeedback ? `请体现连续跟进感，但必须结合本节新情况，不要复述或改写上次反馈。` : "",
+  ].join("\n");
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ];
+}
+
+/**
+ * 把一对一的点评正文与结构化栏目拼成完整反馈（自动按 一、二、三… 编号）。
+ */
+function assembleOneOnOne(input, comment) {
+  const CN_NUM = ["一", "二", "三", "四", "五", "六"];
+  const student = input.student || {};
+  const cfg = input.templateConfig;
+  const title = (cfg && cfg.title) || "课后反馈";
+  const blocks = [title];
+  let index = 0;
+  const push = (heading, body) => {
+    const text = (body || "").trim();
+    if (!text) return;
+    index += 1;
+    blocks.push(`${CN_NUM[index - 1] || index}. ${heading}\n${text}`);
+  };
+
+  const info = [];
+  if (input.lessonTime) info.push(`时间：${input.lessonTime}`);
+  if (input.lessonNo) info.push(`课次：${input.lessonNo}`);
+  if (student.name) info.push(`学生：${student.name}${student.grade ? `（${student.grade}）` : ""}`);
+  push("基本信息", info.join("\n"));
+
+  const content = [];
+  if (input.topic) content.push(input.topic);
+  if (input.classContent) content.push(input.classContent);
+  push("本节内容", content.join("；"));
+
+  push("作业布置", input.homework);
+  push("老师点评及建议", comment);
+  push("下次课计划", input.nextPlan);
+
+  return blocks.join("\n\n");
+}
+
+/**
+ * 一对一统一生成：优先 DeepSeek 写点评正文，失败回退本地，再拼接结构化栏目。
+ */
+async function generateOneOnOne(input) {
+  let comment = "";
+  if (window.PFH_LLM && window.PFH_LLM.isEnabled()) {
+    try {
+      comment = await window.PFH_LLM.complete(buildOneOnOneMessages(input));
+    } catch (err) {
+      console.warn("[PFH] 一对一大模型生成失败，已回退本地模板：", err);
+      if (typeof input.onFallback === "function") input.onFallback(err);
+    }
+  }
+  if (!comment || !comment.trim()) {
+    await new Promise((r) => setTimeout(r, 120));
+    comment = buildOneOnOneComment(input);
+  }
+  return assembleOneOnOne(input, comment);
+}
+
 /**
  * 统一入口。UI 只调用它。
+ * 大班课：逐个学生生成简短反馈；一对一：生成单条更完整的服务汇报。
  * 开启「AI 智能生成」时优先走 DeepSeek；任何失败都自动回退本地模板，保证可用。
  */
 async function generateFeedback(input) {
+  if (input && input.mode === "one") {
+    return generateOneOnOne(input);
+  }
   if (window.PFH_LLM && window.PFH_LLM.isEnabled()) {
     try {
       return await llmGenerate(input);
@@ -250,3 +381,4 @@ async function generateFeedback(input) {
 window.generateFeedback = generateFeedback;
 window.buildFeedbackPrompt = buildFeedbackPrompt;
 window.buildCommentMessages = buildCommentMessages;
+window.buildOneOnOneMessages = buildOneOnOneMessages;

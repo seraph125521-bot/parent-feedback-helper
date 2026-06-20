@@ -22,7 +22,33 @@
     <main>
       <!-- ============ 视图 1：写反馈 ============ -->
       <section class="view" id="view-write">
-        <!-- 课程信息 -->
+        <!-- 授课类型 -->
+        <div class="card mode-card">
+          <div class="field" style="margin-bottom:0">
+            <label>授课类型 <span class="hint">（切换后表单和反馈深度会随之变化）</span></label>
+            <div class="seg seg-lg" id="lessonMode">
+              <button type="button" class="seg-btn active" data-mode="class">大班课</button>
+              <button type="button" class="seg-btn" data-mode="one">一对一</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card sample-card" id="sampleCard">
+          <div class="sample-main">
+            <div>
+              <h2>已放入一节示例课</h2>
+              <p>可以直接点生成体验效果；正式使用前也可以清空重新填写。</p>
+            </div>
+            <button type="button" class="btn-ghost" id="clearExample">清空开始填写</button>
+          </div>
+        </div>
+
+        <div class="copy-success hidden" id="referenceNotice">
+          正在参考上次反馈
+          <button type="button" class="notice-action" id="clearReference">取消参考</button>
+        </div>
+
+        <!-- 课程信息（两种模式共用） -->
         <div class="card">
           <div class="card-title">
             <span class="card-step">1</span>
@@ -50,14 +76,36 @@
             <input type="text" id="homework" placeholder="例如：完成一次函数专题试卷第 1-12 题，整理错题 2 道" />
           </div>
 
-          <div class="field" style="margin-bottom:0">
+          <!-- 大班课专属 -->
+          <div class="field" data-mode-block="class" style="margin-bottom:0">
             <label>班级整体表现 <span class="hint">（选填，所有反馈会带上这个氛围）</span></label>
             <input type="text" id="classNote" placeholder="例如：基础题完成度不错，综合题里条件分析和书写规范还需加强" />
           </div>
+
+          <!-- 一对一专属 -->
+          <div class="field" data-mode-block="one" style="margin-bottom:0">
+            <label>课堂练习 / 讲解内容 <span class="hint">（选填）</span></label>
+            <input type="text" id="classContent" placeholder="例如：精讲模拟卷压轴题 3 道，带练待定系数法" />
+          </div>
         </div>
 
-        <!-- 学员名单 -->
-        <div class="card">
+        <div class="card asset-card" data-mode-block="class" id="assetCard">
+          <div class="card-title asset-title">
+            <h2>常用学生 / 班级</h2>
+            <button type="button" class="btn-ghost btn-mini" id="saveCurrentGroup">保存当前名单</button>
+          </div>
+          <div class="asset-section">
+            <div class="asset-label">常用班级</div>
+            <div id="groupChips" class="chip-list empty-note">还没有常用班级</div>
+          </div>
+          <div class="asset-section">
+            <div class="asset-label">最近学生</div>
+            <div id="studentChips" class="chip-list empty-note">生成一次反馈后，会自动出现在这里</div>
+          </div>
+        </div>
+
+        <!-- 大班课：学员名单 -->
+        <div class="card" data-mode-block="class">
           <div class="card-title">
             <span class="card-step">2</span>
             <h2>这节课的学员</h2>
@@ -65,9 +113,63 @@
           </div>
 
           <div id="studentList" class="student-list"></div>
-          <button type="button" class="btn-add" id="addStudent">＋ 添加学员</button>
+          <div class="student-tools">
+            <button type="button" class="btn-add" id="addStudent">＋ 添加学员</button>
+            <button type="button" class="btn-ghost btn-inline" id="showBatchImport">批量粘贴</button>
+          </div>
+          <div class="batch-panel hidden" id="batchPanel">
+            <textarea id="batchText" class="ta-compact" placeholder="每行一个学员，或：张晨,画图规范但偶尔跳步"></textarea>
+            <div class="batch-preview" id="batchPreview">将添加 0 名学员</div>
+            <div class="batch-actions">
+              <button type="button" class="btn-ghost" id="cancelBatchImport">取消</button>
+              <button type="button" class="btn-primary btn-small" id="confirmBatchImport">确认导入</button>
+            </div>
+          </div>
+        </div>
 
-          <div class="field" style="margin:18px 0 0">
+        <!-- 一对一：这个孩子的情况 -->
+        <div class="card" data-mode-block="one">
+          <div class="card-title">
+            <span class="card-step">2</span>
+            <h2>这个孩子的情况</h2>
+          </div>
+
+          <div class="field compact-grid">
+            <div>
+              <label>学生姓名</label>
+              <input type="text" id="ooName" placeholder="孩子姓名" />
+            </div>
+            <div>
+              <label>年级 / 阶段 <span class="hint">（选填）</span></label>
+              <input type="text" id="ooGrade" placeholder="例如：初二 / 高三一轮" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>已掌握 <span class="hint">（选填）</span></label>
+            <textarea id="ooMastered" class="ta-compact" placeholder="孩子目前比较稳的部分，例如：基础图像判断、常规题型"></textarea>
+          </div>
+          <div class="field">
+            <label>主要卡点 <span class="hint">（选填）</span></label>
+            <textarea id="ooWeakness" class="ta-compact" placeholder="本节暴露的关键问题，例如：综合题条件整理不清、容易跳步"></textarea>
+          </div>
+          <div class="field">
+            <label>课后练习建议 <span class="hint">（选填）</span></label>
+            <textarea id="ooPractice" class="ta-compact" placeholder="具体练什么、怎么练"></textarea>
+          </div>
+          <div class="field">
+            <label>家长配合建议 <span class="hint">（选填）</span></label>
+            <textarea id="ooParent" class="ta-compact" placeholder="家长在家可做的轻量配合"></textarea>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>下次课计划 <span class="hint">（选填）</span></label>
+            <textarea id="ooNextPlan" class="ta-compact" placeholder="下节课准备处理什么"></textarea>
+          </div>
+        </div>
+
+        <!-- 生成设置（两种模式共用） -->
+        <div class="card">
+          <div class="field" style="margin-bottom:0">
             <label>反馈语气</label>
             <div class="seg" id="tone">
               <button type="button" class="seg-btn active" data-tone="温暖鼓励">温暖鼓励</button>
@@ -90,6 +192,15 @@
 
         <button type="button" class="btn-primary" id="generate">一键生成全班反馈</button>
         <p class="mock-note" id="mockNote">当前为初高中数学演示模式（本地模板生成）。接入大模型后内容会更自然、更个性化。</p>
+
+        <div class="card history-card hidden" id="historyCard">
+          <div class="card-title history-title">
+            <h2>最近生成</h2>
+            <button type="button" class="btn-danger-text" id="clearHistory">清空</button>
+          </div>
+          <div id="historyFilters" class="history-filters"></div>
+          <div id="historyList" class="history-list"></div>
+        </div>
       </section>
 
       <!-- ============ 视图 2：我的格式 ============ -->
@@ -116,6 +227,18 @@
           <button type="button" class="btn-ghost btn-reset-tpl" id="resetTemplate">↺ 恢复推荐格式</button>
         </div>
 
+        <div class="card config-card">
+          <div class="card-title">
+            <h2>配置管理</h2>
+          </div>
+          <p class="intro-copy">导出后可以换手机继续用；导入只会覆盖「我的格式」，不会动这节课的学生名单。</p>
+          <input type="file" id="configFile" class="hidden" accept="application/json,.json" />
+          <div class="config-actions">
+            <button type="button" class="btn-ghost" id="exportConfig">导出我的格式</button>
+            <button type="button" class="btn-primary btn-small" id="importConfig">导入我的格式</button>
+          </div>
+        </div>
+
         <div class="card preview-card">
           <div class="card-title">
             <h2>家长会收到这样的反馈</h2>
@@ -131,6 +254,20 @@
           <button type="button" class="btn-back-icon" id="backToEdit" aria-label="返回">←</button>
           <h2>生成结果 <span id="resultCount" class="badge"></span></h2>
           <button type="button" class="btn-ghost" id="copyAll">复制全部</button>
+        </div>
+        <div class="copy-success hidden" id="copySuccess">已复制，可直接粘贴到微信</div>
+        <div class="card payment-card" id="paymentCard">
+          <div class="payment-main">
+            <div>
+              <h2>这次反馈省下时间了吗？</h2>
+              <p>觉得有用，可以 9.9 预定正式版；继续优化 AI 质量、历史和模板同步。</p>
+            </div>
+            <button type="button" class="btn-ghost" id="hidePayment">稍后再说</button>
+          </div>
+          <button type="button" class="btn-primary btn-small" id="showPaymentDetail">查看 9.9 预定方式</button>
+          <div class="payment-detail hidden" id="paymentDetail">
+            <div class="payment-note">添加微信或展示收款码时，备注「课后反馈助手」。收款码图片可放到 docs/images/ 后替换这里的文字说明。</div>
+          </div>
         </div>
         <div id="results"></div>
         <button type="button" class="btn-primary btn-regenerate" id="regenerate">返回修改 / 重新生成</button>
@@ -154,6 +291,8 @@
 
   <script src="templateEngine.js"></script>
   <script src="llm.js"></script>
+  <script src="studentAssets.js"></script>
+  <script src="copyFormat.js"></script>
   <script src="generator.js"></script>
   <script src="app.js"></script>
 </body>

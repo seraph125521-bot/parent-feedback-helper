@@ -57,7 +57,10 @@
 
       const detail = await safeJson(resp);
       if (!resp.ok) {
-        throw new Error(readErrorMessage(detail) || `服务端代理返回 ${resp.status}`);
+        const err = new Error(readErrorMessage(detail) || `服务端代理返回 ${resp.status}`);
+        err.status = resp.status;
+        err.code = (detail && detail.code) || statusToCode(resp.status);
+        throw err;
       }
 
       const text = detail && typeof detail.text === "string" ? detail.text.trim() : "";
@@ -65,7 +68,10 @@
       return text;
     } catch (err) {
       const aborted = err && err.name === "AbortError";
-      throw new Error(aborted ? "大模型请求超时" : (err && err.message) || "大模型请求失败");
+      const next = new Error(aborted ? "大模型请求超时" : (err && err.message) || "大模型请求失败");
+      next.status = err && err.status;
+      next.code = aborted ? "TIMEOUT" : (err && err.code) || "NETWORK_ERROR";
+      throw next;
     } finally {
       clearTimeout(timer);
     }
@@ -83,6 +89,13 @@
     if (!detail) return "";
     if (typeof detail.error === "string") return detail.error;
     return (detail.error && detail.error.message) || detail.message || "";
+  }
+
+  function statusToCode(status) {
+    if (status === 429) return "RATE_LIMITED";
+    if (status === 503) return "CIRCUIT_OPEN";
+    if (status === 504) return "TIMEOUT";
+    return "UPSTREAM_ERROR";
   }
 
   function getProviderInfo() {

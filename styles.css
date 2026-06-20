@@ -380,6 +380,67 @@ textarea:focus {
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
+/* Lesson-mode switch — more prominent than tone */
+.mode-card { padding-top: var(--space-400); padding-bottom: var(--space-400); }
+.seg-lg .seg-btn { padding: 10px 8px; font-size: 16px; }
+.seg-lg .seg-btn.active { color: var(--brand); }
+
+.sample-card { background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(52, 199, 89, 0.08)); }
+.sample-main,
+.payment-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-300);
+}
+.sample-main h2,
+.payment-main h2 { margin: 0 0 var(--space-100); font-size: 17px; font-weight: 700; }
+.sample-main p,
+.payment-main p { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.45; }
+
+.asset-card { padding-bottom: var(--space-400); }
+.asset-title { align-items: center; }
+.asset-title h2 { flex: 1; }
+.btn-mini { padding: 7px 12px; font-size: 13px; border-radius: var(--radius-full); }
+.asset-section + .asset-section { margin-top: var(--space-300); }
+.asset-label {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: var(--space-200);
+}
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-200);
+}
+.chip-list.empty-note {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: var(--space-300);
+  background: var(--ios-gray6);
+  border-radius: var(--radius-lg);
+}
+.asset-chip {
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--ios-fill);
+  color: var(--ink);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 100%;
+}
+.asset-chip:hover { background: var(--ios-fill-strong); }
+.asset-chip.selected { background: var(--brand-soft); color: var(--brand); }
+.asset-chip.group-chip { background: var(--brand-soft); color: var(--brand); }
+
+/* Compact textareas (one-on-one fields) */
+textarea.ta-compact { min-height: 64px; }
+
 /* Student list */
 .student-list { display: flex; flex-direction: column; gap: var(--space-300); margin-bottom: var(--space-300); }
 .student-row {
@@ -419,6 +480,28 @@ textarea:focus {
   transition: background 0.15s;
 }
 .btn-add:hover { background: rgba(0, 122, 255, 0.16); }
+
+.student-tools,
+.config-actions,
+.batch-actions {
+  display: flex;
+  gap: var(--space-300);
+  align-items: center;
+}
+.student-tools .btn-add { flex: 1; }
+.btn-inline { flex: 0 0 auto; border-radius: var(--radius-md); padding: 12px 14px; }
+.batch-panel {
+  margin-top: var(--space-300);
+  padding: var(--space-300);
+  border-radius: var(--radius-lg);
+  background: var(--ios-gray6);
+}
+.batch-preview { margin: var(--space-200) 0; color: var(--ink-soft); font-size: 13px; }
+.btn-small { width: auto; padding: 10px 16px; font-size: 15px; border-radius: var(--radius-md); }
+
+.config-card .intro-copy { margin-bottom: var(--space-400); }
+.config-actions .btn-ghost,
+.config-actions .btn-primary { flex: 1; border-radius: var(--radius-md); }
 
 /* Buttons — iOS filled */
 .btn-primary {
@@ -501,6 +584,15 @@ textarea:focus {
   background: var(--brand);
   display: inline-block;
 }
+.fb-card .fb-tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--brand);
+  border-radius: var(--radius-full);
+  padding: 2px 9px;
+}
 .fb-card .fb-text {
   font-size: 16px;
   color: var(--ink);
@@ -538,6 +630,15 @@ textarea:focus {
   transition: background 0.15s;
 }
 .btn-ghost:hover { background: var(--ios-fill-strong); }
+.btn-danger-text {
+  border: none;
+  background: transparent;
+  color: var(--ios-red);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+}
 .btn-regenerate {
   width: 100%;
   margin-top: var(--space-150);
@@ -547,6 +648,61 @@ textarea:focus {
   padding: 14px;
   font-size: 16px;
 }
+
+.payment-card { margin-bottom: var(--space-400); }
+.payment-card.is-muted { display: none; }
+.payment-card > .btn-primary { margin-top: var(--space-300); width: 100%; }
+.payment-detail {
+  margin-top: var(--space-300);
+  padding: var(--space-300);
+  border-radius: var(--radius-lg);
+  background: var(--ios-gray6);
+}
+.payment-note { color: var(--ink-soft); font-size: 13px; line-height: 1.55; }
+.copy-success {
+  margin: 0 var(--space-100) var(--space-300);
+  padding: var(--space-300) var(--space-400);
+  border-radius: var(--radius-lg);
+  background: rgba(52, 199, 89, 0.12);
+  color: var(--ios-green);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+.notice-action {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 700;
+  margin-left: var(--space-200);
+  cursor: pointer;
+}
+
+.history-card { margin-top: var(--space-400); }
+.history-title { margin-bottom: var(--space-300); }
+.history-title h2 { flex: 1; }
+.history-list { display: flex; flex-direction: column; gap: var(--space-300); }
+.history-filters {
+  display: flex;
+  gap: var(--space-200);
+  overflow-x: auto;
+  padding-bottom: var(--space-300);
+  margin-top: calc(var(--space-200) * -1);
+}
+.history-item {
+  padding: var(--space-300);
+  border-radius: var(--radius-lg);
+  background: var(--ios-gray6);
+}
+.history-meta { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+.history-topic { font-size: 15px; font-weight: 600; color: var(--ink); }
+.history-actions { display: flex; gap: var(--space-200); margin-top: var(--space-300); flex-wrap: wrap; }
+.history-actions .btn-ghost,
+.history-actions .btn-danger-text { padding: 8px 12px; border-radius: var(--radius-full); background: var(--ios-fill); }
+.history-actions .btn-danger-text { background: rgba(255, 59, 48, 0.1); }
+
+.btn-rewrite { margin-right: var(--space-200); background: var(--ios-fill); color: var(--brand); }
 
 .footer {
   text-align: center;
@@ -623,6 +779,13 @@ textarea:focus {
   .student-row .kw { grid-column: 1 / -1; }
   .sec-heading-row { flex-direction: column; align-items: stretch; gap: var(--space-150); }
   .sec-heading-label { margin-bottom: var(--space-100); }
+  .sample-main,
+  .payment-main,
+  .student-tools,
+  .config-actions,
+  .batch-actions { flex-direction: column; align-items: stretch; }
+  .btn-inline,
+  .btn-small { width: 100%; }
 }
 
 @media (max-width: 360px) {
