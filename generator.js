@@ -243,21 +243,37 @@ function buildFeedbackPrompt(input) {
  * 本地模式：把一对一的结构化输入拼成一段口语化的点评正文。
  */
 function buildOneOnOneComment(input) {
-  const t = TONE[input.tone] || TONE["温暖鼓励"];
-  const parts = [];
+  const topic = input.topic || "";
+  const mastered = input.mastered || "";
+  const weakness = input.weakness || "";
+  const practiceAdvice = input.practiceAdvice || "";
 
-  const topicLine = input.topic
-    ? `本节课主要带孩子学习了${input.topic}`
-    : "本节课带孩子做了系统梳理";
-  parts.push(topicLine + (input.classContent ? `，并${input.classContent}` : "") + "。");
+  const sentences = [];
+  if (topic) {
+    sentences.push(`本节课主要带孩子梳理了${topic}，并做了相关练习。`);
+  } else if (input.classContent) {
+    sentences.push("本节课带孩子讲解了典型题，并做了相关练习。");
+  } else {
+    sentences.push("本节课带孩子做了系统梳理和练习。");
+  }
 
-  if (input.mastered) parts.push(`目前掌握比较好的是${input.mastered}。`);
-  if (input.weakness) parts.push(`还需要加强的是${input.weakness}，下一步会重点跟进。`);
-  if (input.practiceAdvice) parts.push(`课后建议：${input.practiceAdvice}。`);
-  if (input.parentAdvice) parts.push(`也希望家长配合：${input.parentAdvice}。`);
+  if (mastered && weakness) {
+    sentences.push(`孩子${mastered}还不错，但${weakness}还不够稳。`);
+  } else if (weakness) {
+    sentences.push(`${weakness}这块还不够稳，后面要多练习。`);
+  } else if (mastered) {
+    sentences.push(`孩子${mastered}这块做得不错。`);
+  }
 
-  parts.push(t.end);
-  return parts.join(t.warm ? "\n" : "");
+  if (practiceAdvice) {
+    sentences.push("课后重点整理错题，写清楚条件和步骤，多总结题型。");
+  } else if (weakness) {
+    sentences.push("课后把典型题多练 2～3 道，注意步骤和运算，多总结题型。");
+  } else {
+    sentences.push("课后把今天的题目及时巩固，多做题、多总结题型。");
+  }
+
+  return sentences.slice(0, 3).join("");
 }
 
 /**
@@ -267,13 +283,21 @@ function buildOneOnOneMessages(input) {
   const student = input.student || {};
   const system = [
     `你要模仿"我"——一位资深初高中数学一对一辅导老师——的口吻，写一段发给家长的"课后点评及建议"正文。`,
-    `这是一对一辅导，家长很在意孩子的个性化情况，请写得具体、有针对性、有跟进感。`,
     `你只输出这一段点评正文，不要输出标题、时间、下次计划等其它栏目，不要使用 Markdown、编号或表情符号。`,
-    `【要求】`,
-    `1. 不写家长称谓，提到学生统一用"孩子"，不要把姓名当开头。`,
-    `2. 80-160 字，自然成段，按"本节内容 → 掌握情况 → 主要卡点 → 课后建议"展开，不要分一二三点。`,
-    `3. 朴实、口语、具体，紧扣给到的信息，不空泛套话；不攀比、不制造焦虑、不夸大承诺。`,
-    `4. 只谈初高中数学：知识点、解题方法、运算与书写规范、审题建模、错题整理等。`,
+    ``,
+    `【我的写作风格，务必模仿】`,
+    `1. 称呼：从不写"X家长/家长您好"，直接从内容写起；提到学生统一用"孩子"，不要把姓名当开头。`,
+    `2. 语感：短句、口语、朴实，像微信里随手发给家长的大白话；不堆砌形容词，不空泛套话。`,
+    `3. 篇幅：40-90 字，2-3 句话，宁可短而实在，不要长而空；如果发现超过 90 字，请自己重写得更短。`,
+    `4. 信息选择：只挑 2-3 个最关键点写（一个亮点 + 一个小问题 + 一个可执行建议）。不要把我给你的每个字段都复述一遍。`,
+    `5. 行文：按"本节课讲了什么/孩子表现 → 小问题或难点 → 具体建议"自然展开，不要写成一二三分点。`,
+    `6. 客观：可以如实点出小毛病（偶尔算错/熟练度不够/复杂图形处理吃力），但要温和，不制造焦虑，不夸大承诺。`,
+    `7. 只谈初高中数学：知识点、解题方法、运算与书写规范、审题建模、错题整理等；不涉及其它学科。`,
+    ``,
+    `【我本人写过的真实范例，模仿这种语感（不要照抄内容）】`,
+    `例1：孩子计算认真，但有的时候偶尔会算错，平时还要多总结题型，归纳知识点，计算还要更加严谨。`,
+    `例2：孩子上课思考积极，碰到不会的问题主动去解决。今天讲了几道比较难的题目，孩子能自己独立完成，很不错，希望继续加油，不断进步。`,
+    `例3：这部分内容对计算能力要求比较高，孩子整体还不错，但复杂题型还要多练习，多积攒解题经验。`,
   ].join("\n");
 
   const toneHint = {
@@ -294,12 +318,27 @@ function buildOneOnOneMessages(input) {
     `家长配合建议：${input.parentAdvice || "（未填）"}`,
     input.previousFeedback ? `上次反馈参考：${input.previousFeedback}` : "",
     input.previousFeedback ? `请体现连续跟进感，但必须结合本节新情况，不要复述或改写上次反馈。` : "",
+    `再次强调：只写 2-3 句话，40-90 字，不要分点；不要为了完整覆盖字段而写长。`,
   ].join("\n");
 
   return [
     { role: "system", content: system },
     { role: "user", content: user },
   ];
+}
+
+function cleanTeacherComment(raw) {
+  let text = typeof raw === "string" ? raw : "";
+  text = text.replace(/\r\n/g, "\n").trim();
+  if (!text) return "";
+
+  // 去掉常见分点/编号前缀（尽量保守，只处理开头）
+  text = text.replace(/^\s*(?:\d+|[一二三四五六七八九十]+)\s*[、.．)\]]\s*/u, "");
+  text = text.replace(/^\s*[-*]\s*/u, "");
+
+  // 只做格式清理，不做字数截断，避免破坏老师口吻和句子完整性
+  text = text.replace(/[ \t]+/g, "").replace(/\n{2,}/g, "\n").trim();
+  return text;
 }
 
 /**
@@ -344,7 +383,10 @@ async function generateOneOnOne(input) {
   let comment = "";
   if (window.PFH_LLM && window.PFH_LLM.isEnabled()) {
     try {
-      comment = await window.PFH_LLM.complete(buildOneOnOneMessages(input));
+      comment = await window.PFH_LLM.complete(buildOneOnOneMessages(input), {
+        temperature: 0.6,
+        max_tokens: 180,
+      });
     } catch (err) {
       console.warn("[PFH] 一对一大模型生成失败，已回退本地模板：", err);
       if (typeof input.onFallback === "function") input.onFallback(err);
@@ -354,6 +396,7 @@ async function generateOneOnOne(input) {
     await new Promise((r) => setTimeout(r, 120));
     comment = buildOneOnOneComment(input);
   }
+  comment = cleanTeacherComment(comment);
   return assembleOneOnOne(input, comment);
 }
 
