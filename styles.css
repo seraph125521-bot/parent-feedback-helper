@@ -402,6 +402,37 @@ textarea:focus {
 .asset-title { align-items: center; }
 .asset-title h2 { flex: 1; }
 .btn-mini { padding: 7px 12px; font-size: 13px; border-radius: var(--radius-full); }
+
+/* ---- 折叠通用 ---- */
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-md);
+  margin: calc(var(--space-100) * -1);
+  padding: var(--space-100);
+  transition: background 0.15s;
+}
+.collapsible-header:hover { background: var(--ios-fill); }
+.fold-summary {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: var(--space-200);
+  margin-right: var(--space-100);
+}
+.fold-arrow {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-right: var(--space-200);
+  flex-shrink: 0;
+  transition: transform 0.18s;
+}
+
 .asset-section + .asset-section { margin-top: var(--space-300); }
 .asset-label {
   color: var(--ink-soft);
@@ -680,7 +711,7 @@ textarea.ta-compact { min-height: 64px; }
 }
 
 .history-card { margin-top: var(--space-400); }
-.history-title { margin-bottom: var(--space-300); }
+.history-title { margin-bottom: 0; }
 .history-title h2 { flex: 1; }
 .history-list { display: flex; flex-direction: column; gap: var(--space-300); }
 .history-filters {
@@ -688,7 +719,7 @@ textarea.ta-compact { min-height: 64px; }
   gap: var(--space-200);
   overflow-x: auto;
   padding-bottom: var(--space-300);
-  margin-top: calc(var(--space-200) * -1);
+  margin-top: var(--space-300);
 }
 .history-item {
   padding: var(--space-300);

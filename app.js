@@ -5,6 +5,8 @@
   const HISTORY_KEY = "pfh_history_v1";
   const STUDENT_ASSETS_KEY = "pfh_student_assets_v1";
   const PAYMENT_PROMPT_KEY = "pfh_payment_prompt_v1";
+  const ASSET_FOLD_KEY = "pfh_asset_fold_v1";
+  const HISTORY_FOLD_KEY = "pfh_history_fold_v1";
   const MAX_HISTORY = 30;
   const templateApi = window.PFH_TEMPLATE;
   const assetsApi = window.PFH_STUDENT_ASSETS;
@@ -62,6 +64,9 @@
   let copySuccessTimer = null;
   let historyFilterName = "";
   let pendingReference = null;
+  // 折叠状态：true = 折叠（收起），false = 展开，默认折叠
+  let assetCollapsed = true;
+  let historyCollapsed = true;
 
   /* ---------- 视图路由 ---------- */
   function showView(name) {
@@ -357,8 +362,63 @@
     } catch (e) {}
   }
 
+  /* ---------- 折叠：常用学生 / 班级 ---------- */
+  function applyAssetFold() {
+    const body = $("#assetBody");
+    const icon = $("#assetFoldIcon");
+    if (!body || !icon) return;
+    body.classList.toggle("hidden", assetCollapsed);
+    icon.textContent = assetCollapsed ? "▼" : "▲";
+  }
+
+  function toggleAssetCard() {
+    assetCollapsed = !assetCollapsed;
+    applyAssetFold();
+    try { localStorage.setItem(ASSET_FOLD_KEY, assetCollapsed ? "1" : "0"); } catch (e) {}
+  }
+
+  function updateAssetSummary() {
+    const el = $("#assetSummary");
+    if (!el || !assetsApi) return;
+    const groups = assetsApi.getRecentGroups(studentAssets, 1);
+    const students = assetsApi.getRecentStudents(studentAssets, 8);
+    if (groups.length) {
+      el.textContent = groups[0].name;
+    } else if (students.length) {
+      el.textContent = `${students.length} 位最近学生`;
+    } else {
+      el.textContent = "点击展开";
+    }
+  }
+
+  /* ---------- 折叠：最近生成 ---------- */
+  function applyHistoryFold() {
+    const body = $("#historyBody");
+    const icon = $("#historyFoldIcon");
+    if (!body || !icon) return;
+    body.classList.toggle("hidden", historyCollapsed);
+    icon.textContent = historyCollapsed ? "▼" : "▲";
+  }
+
+  function toggleHistoryCard() {
+    historyCollapsed = !historyCollapsed;
+    applyHistoryFold();
+    try { localStorage.setItem(HISTORY_FOLD_KEY, historyCollapsed ? "1" : "0"); } catch (e) {}
+  }
+
+  function updateHistorySummary() {
+    const el = $("#historySummary");
+    if (!el) return;
+    const history = loadHistory();
+    if (!history.length) { el.textContent = ""; return; }
+    const latest = history[0];
+    const topic = latest.topic || "未填写主题";
+    el.textContent = `${topic} · ${formatDisplayTime(latest.createdAt)}`;
+  }
+
   function renderStudentAssets() {
     if (!assetsApi) return;
+    updateAssetSummary();
     renderStudentChips();
     renderGroupChips();
   }
@@ -726,6 +786,8 @@
     if (!card || !list) return;
     const history = loadHistory();
     card.classList.toggle("hidden", history.length === 0);
+    updateHistorySummary();
+    applyHistoryFold();
     renderHistoryFilters(history);
     const visible = historyFilterName
       ? history.filter((item) => (item.studentNames || []).includes(historyFilterName))
@@ -1088,6 +1150,18 @@
     $("#saveCurrentGroup").addEventListener("click", saveCurrentGroup);
     $("#clearReference").addEventListener("click", clearReference);
 
+    // 常用学生 / 班级折叠
+    $("#assetHeader").addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      toggleAssetCard();
+    });
+
+    // 最近生成折叠
+    $("#historyHeader").addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      toggleHistoryCard();
+    });
+
     loadStudentAssets();
 
     // AI 智能生成开关（DeepSeek）
@@ -1142,6 +1216,10 @@
     }
     syncStudents();
     renderBuilder();
+    // 恢复折叠状态（"0" = 用户上次主动展开；否则默认折叠）
+    assetCollapsed = localStorage.getItem(ASSET_FOLD_KEY) !== "0";
+    historyCollapsed = localStorage.getItem(HISTORY_FOLD_KEY) !== "0";
+    applyAssetFold();
     renderHistory();
     renderStudentAssets();
     updatePaymentVisibility();

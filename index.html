@@ -90,17 +90,21 @@
         </div>
 
         <div class="card asset-card" data-mode-block="class" id="assetCard">
-          <div class="card-title asset-title">
+          <div class="card-title asset-title collapsible-header" id="assetHeader">
             <h2>常用学生 / 班级</h2>
+            <span class="fold-summary" id="assetSummary"></span>
+            <span class="fold-arrow" id="assetFoldIcon">▼</span>
             <button type="button" class="btn-ghost btn-mini" id="saveCurrentGroup">保存当前名单</button>
           </div>
-          <div class="asset-section">
-            <div class="asset-label">常用班级</div>
-            <div id="groupChips" class="chip-list empty-note">还没有常用班级</div>
-          </div>
-          <div class="asset-section">
-            <div class="asset-label">最近学生</div>
-            <div id="studentChips" class="chip-list empty-note">生成一次反馈后，会自动出现在这里</div>
+          <div id="assetBody" class="hidden">
+            <div class="asset-section">
+              <div class="asset-label">常用班级</div>
+              <div id="groupChips" class="chip-list empty-note">还没有常用班级</div>
+            </div>
+            <div class="asset-section">
+              <div class="asset-label">最近学生</div>
+              <div id="studentChips" class="chip-list empty-note">生成一次反馈后，会自动出现在这里</div>
+            </div>
           </div>
         </div>
 
@@ -194,12 +198,16 @@
         <p class="mock-note" id="mockNote">当前为初高中数学演示模式（本地模板生成）。接入大模型后内容会更自然、更个性化。</p>
 
         <div class="card history-card hidden" id="historyCard">
-          <div class="card-title history-title">
+          <div class="card-title history-title collapsible-header" id="historyHeader">
             <h2>最近生成</h2>
+            <span class="fold-summary" id="historySummary"></span>
+            <span class="fold-arrow" id="historyFoldIcon">▼</span>
             <button type="button" class="btn-danger-text" id="clearHistory">清空</button>
           </div>
-          <div id="historyFilters" class="history-filters"></div>
-          <div id="historyList" class="history-list"></div>
+          <div id="historyBody" class="hidden">
+            <div id="historyFilters" class="history-filters"></div>
+            <div id="historyList" class="history-list"></div>
+          </div>
         </div>
       </section>
 
