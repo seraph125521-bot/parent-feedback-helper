@@ -85,6 +85,7 @@
     // 写反馈页根据授课类型同步表单、说明与按钮文案
     if (name === "write") {
       applyMode(state.lessonMode);
+      syncOutputFieldStates();
       updateReferenceNotice();
     }
 
@@ -185,6 +186,49 @@
     });
   }
 
+  /* ---------- 我的格式 ↔ 写反馈弱联动 ---------- */
+  const OUTPUT_SECTION_HINTS = {
+    lesson: "当前不会输出时间/课次/学生信息",
+    knowledge: "当前不会输出学习知识点栏目",
+    homework: "我的格式中已关闭，填写后也不会出现在反馈里",
+    comment: "当前不会输出老师点评栏目，生成结果可能缺少核心内容",
+  };
+
+  function isSectionEnabled(key) {
+    const cfg = templateApi.normalizeConfig(state.templateConfig);
+    const section = cfg.sections.find((s) => s.key === key);
+    return !section || section.enabled !== false;
+  }
+
+  function syncOutputFieldStates() {
+    document.querySelectorAll("[data-output-section]").forEach((el) => {
+      const key = el.dataset.outputSection;
+      const enabled = isSectionEnabled(key);
+      el.classList.toggle("output-off", !enabled);
+
+      el.querySelectorAll(".output-status-tag, .output-hint").forEach((node) => node.remove());
+      if (enabled) return;
+
+      const tag = document.createElement("span");
+      tag.className = "output-status-tag";
+      tag.textContent = "不输出";
+
+      const label = el.querySelector("label") || el.querySelector(".card-title h2");
+      if (label) label.appendChild(tag);
+
+      const hint = document.createElement("div");
+      hint.className = "output-hint";
+      hint.textContent = OUTPUT_SECTION_HINTS[key] || "当前栏目不会出现在生成结果中";
+      el.appendChild(hint);
+    });
+  }
+
+  function warnHiddenOutputFields() {
+    if (!isSectionEnabled("homework") && $("#homework").value.trim()) {
+      toast("作业布置当前不会输出，可在「我的格式」中开启");
+    }
+  }
+
   /* ---------- 我的格式：可视化构建器 ---------- */
   function renderBuilder() {
     const cfg = templateApi.normalizeConfig(state.templateConfig);
@@ -228,6 +272,7 @@
         item.classList.toggle("off", !sec.enabled);
         saveState();
         updatePreview();
+        syncOutputFieldStates();
       });
       item.querySelector(".sec-heading").addEventListener("input", (e) => {
         sec.heading = e.target.value;
@@ -241,6 +286,7 @@
     });
 
     updatePreview();
+    syncOutputFieldStates();
   }
 
   function moveSection(index, delta) {
@@ -296,6 +342,7 @@
         saveState();
         renderBuilder();
         updatePreview();
+        syncOutputFieldStates();
         toast("格式已导入");
       } catch (e) {
         toast("导入失败，请选择正确的格式文件");
@@ -562,6 +609,7 @@
     state.topic = $("#topic").value.trim();
     state.homework = $("#homework").value.trim();
     state.classNote = $("#classNote").value.trim();
+    warnHiddenOutputFields();
 
     const valid = state.students.filter((s) => s.name);
     if (valid.length === 0) {
@@ -626,6 +674,7 @@
       toast("请先填写学生姓名");
       return;
     }
+    warnHiddenOutputFields();
     saveState();
 
     const btn = $("#generate");

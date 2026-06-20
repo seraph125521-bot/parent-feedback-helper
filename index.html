@@ -55,7 +55,7 @@
             <h2>这节课的信息</h2>
           </div>
 
-          <div class="field compact-grid">
+          <div class="field compact-grid" data-output-section="lesson">
             <div>
               <label>上课时间</label>
               <input type="text" id="lessonTime" placeholder="例如：2026年6月15日" />
@@ -66,12 +66,12 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" data-output-section="knowledge">
             <label>今天的数学主题 <span class="hint">（教了什么）</span></label>
             <input type="text" id="topic" placeholder="例如：一次函数图像 / 三角恒等变换 / 立体几何线面关系 / 导数应用" />
           </div>
 
-          <div class="field">
+          <div class="field" data-output-section="homework">
             <label>作业布置</label>
             <input type="text" id="homework" placeholder="例如：完成一次函数专题试卷第 1-12 题，整理错题 2 道" />
           </div>
@@ -109,7 +109,7 @@
         </div>
 
         <!-- 大班课：学员名单 -->
-        <div class="card" data-mode-block="class">
+        <div class="card" data-mode-block="class" data-output-section="comment">
           <div class="card-title">
             <span class="card-step">2</span>
             <h2>这节课的学员</h2>
@@ -132,7 +132,7 @@
         </div>
 
         <!-- 一对一：这个孩子的情况 -->
-        <div class="card" data-mode-block="one">
+        <div class="card" data-mode-block="one" data-output-section="comment">
           <div class="card-title">
             <span class="card-step">2</span>
             <h2>这个孩子的情况</h2>

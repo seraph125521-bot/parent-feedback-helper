@@ -157,6 +157,36 @@ main { flex: 1; padding: var(--space-200) var(--space-400) 96px; }
 }
 .hint { color: var(--ink-soft); font-weight: 400; font-size: 12px; }
 .row-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* 输出状态：我的格式关闭栏目后，写反馈仍可填写但明确标记不会输出 */
+.output-off {
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: rgba(118, 118, 128, 0.06);
+  padding: var(--space-300);
+  margin-left: calc(var(--space-300) * -1);
+  margin-right: calc(var(--space-300) * -1);
+}
+.output-status-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-150);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--ios-fill-strong);
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.output-hint {
+  margin-top: var(--space-200);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+  grid-column: 1 / -1;
+}
+
 .compact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
