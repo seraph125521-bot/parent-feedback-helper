@@ -1,8 +1,8 @@
 ﻿/*
  * Frontend LLM client (PFH_LLM)
  * ------------------------------------------------------------------
- * Calls the serverless proxy: POST /api/generate
- * API Key must stay on server-side env vars (Vercel).
+ * Calls the serverless proxy: POST /api/generate by default.
+ * API Key must stay on server-side env vars.
  *
  * Exposes: window.PFH_LLM
  *   isEnabled()              Whether AI generation is enabled
@@ -14,8 +14,14 @@
   "use strict";
 
   const ENABLE_KEY = "pfh_llm_enabled_v1";
-  const API_ENDPOINT = "/api/generate";
+  const DEFAULT_API_ENDPOINT = "/api/generate";
   const DEFAULT_TIMEOUT = 30000;
+
+  function getApiEndpoint() {
+    const config = window.PFH_CONFIG || {};
+    const endpoint = typeof config.apiEndpoint === "string" ? config.apiEndpoint.trim() : "";
+    return endpoint || DEFAULT_API_ENDPOINT;
+  }
 
   let enabled = false;
   try {
@@ -42,7 +48,7 @@
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), options.timeout || DEFAULT_TIMEOUT);
     try {
-      const resp = await fetch(API_ENDPOINT, {
+      const resp = await fetch(getApiEndpoint(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +108,7 @@
     return {
       key: "server-proxy",
       name: "DeepSeek (Server Proxy)",
-      endpoint: API_ENDPOINT,
+      endpoint: getApiEndpoint(),
       model: "deepseek-chat",
     };
   }
@@ -112,6 +118,8 @@
     setEnabled,
     complete,
     getProviderInfo,
-    ENDPOINT: API_ENDPOINT,
+    get ENDPOINT() {
+      return getApiEndpoint();
+    },
   };
 })();
