@@ -1,0 +1,44 @@
+{
+  "name": "parent-feedback-helper-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "课后反馈助手 Electron 桌面版 MVP",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "sync": "node scripts/sync-renderer.js",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check scripts/sync-renderer.js",
+    "build:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.parentfeedback.helper.desktop",
+    "productName": "课后反馈助手",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3"
+  }
+}
